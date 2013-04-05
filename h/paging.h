@@ -1,4 +1,6 @@
 /* paging.h */
+#ifndef _PAGING_H_
+#define _PAGING_H_
 
 typedef unsigned int	 bsd_t;
 #define FP2FN(frm)  (((frm) - frm_map) + FRAME0)
@@ -90,6 +92,7 @@ typedef struct _frame_t {
 
 	struct _frame_t *fifo; /* when the page is loaded, in ticks*/
 	int age; /* Used for page replacement policy AGING */
+	int frm_num;
 } frame_t; //kernel
 
 //typedef struct{
@@ -149,3 +152,5 @@ SYSCALL write_bs(char *, bsd_t, int);
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/
+
+#endif

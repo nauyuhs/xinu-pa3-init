@@ -122,8 +122,8 @@ nulluser()				/* babysit CPU when no one is home */
 
 userpid = create(main, INITSTK, INITPRIO, INITNAME, INITARGS);
 
-	//enable_paging(FP2PA(proctab[NULLPROC].pd) );
-	enable_paging((NFRAMES+4)*NBPG);
+	enable_paging((proctab[NULLPROC].pd->frm_num)*NBPG);
+//	enable_paging((NFRAMES+4)*NBPG);
 	enable();
 	resume(userpid);
 
@@ -231,47 +231,6 @@ sysinit()
 
 	rdytail = 1 + (rdyhead=newqueue());/* initialize ready list */
 
-	/*//setting value for common page directory
-	pptr->pdbr = &shared_page_directory[0];
-
-	for(i = 0; i < 4; i++)
-	{
-		shared_page_directory[i].pd_pres = 1;
-		shared_page_directory[i].pd_write = 1;
-		shared_page_directory[i].pd_user = 0;
-		shared_page_directory[i].pd_pwt = 0;
-		shared_page_directory[i].pd_pcd = 0;
-		shared_page_directory[i].pd_acc = 0;
-		shared_page_directory[i].pd_mbz = 0;
-		shared_page_directory[i].pd_fmb = 0;
-		shared_page_directory[i].pd_global = 0;
-		shared_page_directory[i].pd_avail = 0;
-		shared_page_directory[i].pd_base = &shared_page_table[i][0];
-	}
-
-	int outer = 0;
-	long start = 0x00000000;
-	for(outer = 0; outer < 4; outer++)
-	{
-		int inner = 0;
-		for(inner = 0; inner < 1024; inner++)
-		{
-			shared_page_table[outer][inner].pt_pres = 1;
-			shared_page_table[outer][inner].pt_write = 1;
-			shared_page_table[outer][inner].pt_user = 0;
-			shared_page_table[outer][inner].pt_pwt = 0;
-			shared_page_table[outer][inner].pt_pcd = 0;
-			shared_page_table[outer][inner].pt_acc = 0;
-			shared_page_table[outer][inner].pt_dirty = 0;
-			shared_page_table[outer][inner].pt_mbz = 0;
-			shared_page_table[outer][inner].pt_global = 0;
-			shared_page_table[outer][inner].pt_avail = 0;
-			shared_page_table[outer][inner].pt_base = start;
-			
-			start = start + 0x00001000;
-		}
-
-	}*/
 	init_bsm();
 	init_frm();
 

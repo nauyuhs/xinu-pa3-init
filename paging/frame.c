@@ -24,6 +24,7 @@ SYSCALL init_frm()
 	frm_tab[i].bs_next = NULL;
 	frm_tab[i].fifo = NULL;
 	frm_tab[i].age = 0;
+	frm_tab[i].frm_num = FRAME0 + i;
 	
 	frm_map[i].fr_status = FRM_UNMAPPED;
 	frm_map[i].fr_pid = -1;
@@ -33,9 +34,8 @@ SYSCALL init_frm()
 	frm_map[i].fr_dirty = -1;
 	frm_map[i].cookie = NULL;
 	frm_map[i].fr_loadtime = 0;
-
   }
-
+  return OK;
 }
 
 /*-------------------------------------------------------------------------

@@ -13,6 +13,8 @@
 #define _NFILE		20		/* # of files allowed */
 #endif
 
+#include<paging.h>
+
 #define	FDFREE		-1		/* free file descriptor */
 #define PRFREE		'\002'          /* process slot is free         */
 
@@ -65,7 +67,7 @@ struct	pentry	{
 	int	fildes[_NFILE];		/* file - device translation	*/
 	int	ppagedev;		/* pageing dgram device		*/
 	int	pwaitret;
-	struct frame_t *pd; /* page directory */
+	frame_t *pd; /* page directory */
 
 /* for process scheduling*/
         int     ppolicy;                /* process scheduling policy    */
