@@ -124,7 +124,7 @@ nulluser()				/* babysit CPU when no one is home */
 
 	userpid = create(main, INITSTK, INITPRIO, INITNAME, INITARGS);
 
-	enable_paging((proctab[NULLPROC].pd->frm_num)*NBPG);
+	enable_paging((proctab[NULLPROC].pd->frm_num) * NBPG);
 	enable();
 	resume(userpid);
 
@@ -236,31 +236,7 @@ sysinit()
 	int start = NFRAMES;
 	init_glb_pgs(glb_pg_tbl_frm_mapping);
 	// init pg dir for proc 0
-	avail = 0;
-	get_frm(&avail);
-	frm_tab[avail].status = FRM_PGD;
-	frm_tab[avail].refcnt = MAXINT;
-
-	frm_map[avail].fr_pid = 0;
-	frm_map[avail].fr_status = FRM_MAPPED;
-	frm_map[avail].fr_type = FR_DIR;
-
-	pd_t *ptr1 = (pd_t *)(NBPG * frm_tab[avail].frm_num);
-	for(i = 0; i < NUM_GLB_PG_TBLS; i++)
-	{
-		ptr1->pd_pres = 1;
-		ptr1->pd_write = 1;
-		ptr1->pd_user = 0;
-		ptr1->pd_pwt = 0;
-		ptr1->pd_pcd = 0;
-		ptr1->pd_acc = 0;
-		ptr1->pd_mbz = 0;
-		ptr1->pd_fmb = 0;
-		ptr1->pd_global = 0;
-		ptr1->pd_avail = 0;
-		ptr1->pd_base = glb_pg_tbl_frm_mapping[i];
-		ptr1++;
-	}
+	init_pg_dir(&avail);
 	pptr->pdbr = frm_tab[avail].frm_num;
 	pptr->pd = &frm_tab[avail];
 	return(OK);

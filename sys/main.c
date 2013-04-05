@@ -13,7 +13,8 @@ void halt();
  *------------------------------------------------------------------------
  */
 int main() {
-	char *addr = (char*) 0x40000000; //1G
+//	char *addr = (char*) 0x40000000; //1G
+	char *addr = (char*) (2048*4096);
 	bsd_t bs = 1;
 
 	int i = ((unsigned long) addr) >> 12;	// the ith page
@@ -38,13 +39,13 @@ int main() {
 		addr += NBPG;	//increment by one page each time
 	}
 
-	addr = (char*) 0x40000000; //1G
-	for (i = 0; i < 16; i++) {
-		kprintf("0x%08x: %c\n", addr, *addr);
-		addr += 4096;       //increment by one page each time
-	}
-
-	xmunmap(0x40000000 >> 12);
+//	addr = (char*) 0x40000000; //1G
+//	for (i = 0; i < 16; i++) {
+//		kprintf("0x%08x: %c\n", addr, *addr);
+//		addr += 4096;       //increment by one page each time
+//	}
+//
+//	xmunmap(0x40000000 >> 12);
 
 	return 0;
 }

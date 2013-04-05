@@ -32,6 +32,7 @@ SYSCALL create(procaddr,ssize,priority,name,nargs,args)
 	unsigned long	*a;		/* points to list of args	*/
 	unsigned long	*saddr;		/* stack address		*/
 	int		INITRET();
+	int avail = 0;
 
 	disable(ps);
 	if (ssize < MINSTK)
@@ -95,7 +96,10 @@ SYSCALL create(procaddr,ssize,priority,name,nargs,args)
 	*--saddr = 0;		/* %esi */
 	*--saddr = 0;		/* %edi */
 	*pushsp = pptr->pesp = (unsigned long)saddr;
-
+	init_pg_dir(&avail);
+	kprintf("main proc pd = %d\n", avail);
+	pptr->pdbr = frm_tab[avail].frm_num;
+	pptr->pd = &frm_tab[avail];
 	restore(ps);
 
 	return(pid);

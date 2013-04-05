@@ -151,7 +151,7 @@ SYSCALL release_bs(bsd_t);
 SYSCALL read_bs(char *, bsd_t, int);
 SYSCALL write_bs(char *, bsd_t, int);
 void init_glb_pgs(int *idx_mapper);
-
+SYSCALL init_pg_dir(int *avail);
 
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
