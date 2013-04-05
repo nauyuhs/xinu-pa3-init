@@ -10,7 +10,7 @@ typedef unsigned int	 bsd_t;
 #define FRAME0		1024	/* zero-th frame		*/
 
 #define NFRAMES 	1024	/* number of frames		*/
-
+#define NUM_PG_TBL_ENTRIES 1024
 #define BSM_UNMAPPED	0
 #define BSM_MAPPED	1
 
@@ -138,6 +138,7 @@ extern bs_map_t bs_map[NBS];
 extern fr_map_t frm_map[NFRAMES];
 extern bs_t bs_tab[NBS];
 extern frame_t frm_tab[NFRAMES];
+extern int glb_pg_tbl_frm_mapping[];
 
 /* Prototypes for required API calls */
 SYSCALL xmmap(int, bsd_t, int);
@@ -149,6 +150,7 @@ int get_bs(bsd_t, unsigned int);
 SYSCALL release_bs(bsd_t);
 SYSCALL read_bs(char *, bsd_t, int);
 SYSCALL write_bs(char *, bsd_t, int);
+void init_glb_pgs(int *idx_mapper);
 
 
 /*creating common 4 page tables and 1 page directory

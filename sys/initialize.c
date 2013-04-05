@@ -49,6 +49,8 @@ int	console_dev;		/* the console device			*/
 /*  added for the demand paging */
 int page_replace_policy = FIFO;
 
+int glb_pg_tbl_frm_mapping[NUM_GLB_PG_TBLS];
+
 /************************************************************************/
 /***				NOTE:				      ***/
 /***								      ***/
@@ -120,16 +122,13 @@ nulluser()				/* babysit CPU when no one is home */
 	
 	kprintf("clock %sabled\n", clkruns == 1?"en":"dis");
 
-userpid = create(main, INITSTK, INITPRIO, INITNAME, INITARGS);
+	userpid = create(main, INITSTK, INITPRIO, INITNAME, INITARGS);
 
 	enable_paging((proctab[NULLPROC].pd->frm_num)*NBPG);
-//	enable_paging((NFRAMES+4)*NBPG);
 	enable();
 	resume(userpid);
 
 	/* create a process to execute the user's main program */
-	//userpid = create(main,INITSTK,INITPRIO,INITNAME,INITARGS);
-	//resume(userpid);
 
 	while (TRUE)
 		/* empty */;
@@ -235,53 +234,19 @@ sysinit()
 	init_frm();
 
 	int start = NFRAMES;
+	init_glb_pgs(glb_pg_tbl_frm_mapping);
+	// init pg dir for proc 0
+	avail = 0;
+	get_frm(&avail);
+	frm_tab[avail].status = FRM_PGD;
+	frm_tab[avail].refcnt = MAXINT;
+
+	frm_map[avail].fr_pid = 0;
+	frm_map[avail].fr_status = FRM_MAPPED;
+	frm_map[avail].fr_type = FR_DIR;
+
+	pd_t *ptr1 = (pd_t *)(NBPG * frm_tab[avail].frm_num);
 	for(i = 0; i < NUM_GLB_PG_TBLS; i++)
-	{
-		avail = 0;
-		get_frm(&avail);
-		frm_tab[avail].status = FRM_PGT;
-		frm_tab[avail].refcnt = MAXINT;
-
-		frm_map[avail].fr_pid = 0;
-		frm_map[avail].fr_status = FRM_MAPPED;
-		frm_map[avail].fr_type = FR_TBL;
-	}
-	
-	frm_tab[4].status = FRM_PGD;
-	frm_tab[4].refcnt = MAXINT;
-
-	frm_map[4].fr_pid = 0;
-	frm_map[4].fr_status = FRM_MAPPED;
-	frm_map[4].fr_type = FR_DIR;
-
-	int outer = 0;
-	int frame_num = 0;
-	//pt_t *ptr = (pt_t *)0x00400000;
-	pt_t *ptr = (pt_t *)(NBPG*NFRAMES);
-	for(outer = 0; outer < 4; outer++)
-	{
-		for(i = 0; i < NFRAMES; i++)
-		{
-			ptr->pt_pres = 1;
-			ptr->pt_write = 1;
-			ptr->pt_user = 0;
-			ptr->pt_pwt = 0;
-			ptr->pt_pcd = 0;
-			ptr->pt_acc = 0;
-			ptr->pt_dirty = 0;
-			ptr->pt_mbz = 0;
-			ptr->pt_global = 0;
-			ptr->pt_avail = 0;
-			ptr->pt_base = frame_num;
-			ptr++;
-			frame_num++;
-		}
-	//	ptr = ptr+
-	}
-	pd_t *ptr1 = (pd_t *)(NBPG*NFRAMES);
-	ptr1 += NBPG;
-	frame_num = FRAME0;
-	for(i = 0; i < 4; i++)
 	{
 		ptr1->pd_pres = 1;
 		ptr1->pd_write = 1;
@@ -293,12 +258,11 @@ sysinit()
 		ptr1->pd_fmb = 0;
 		ptr1->pd_global = 0;
 		ptr1->pd_avail = 0;
-		ptr1->pd_base = frame_num;
+		ptr1->pd_base = glb_pg_tbl_frm_mapping[i];
 		ptr1++;
-		frame_num++;
 	}
-	pptr->pdbr = FRAME0+4;
-	pptr->pd = &frm_tab[4];
+	pptr->pdbr = frm_tab[avail].frm_num;
+	pptr->pd = &frm_tab[avail];
 	return(OK);
 }
 

@@ -47,10 +47,9 @@ SYSCALL get_frm(int* avail)
 	int i = 0;
 	for (i = 0; i < NFRAMES; i++) {
 		if(frm_tab[i].status == FRM_FREE){
-			*avail = i;
+			*avail = frm_tab[i].frm_num;
 			return OK;
 		}
-
 	}
   return SYSERR;
 }
