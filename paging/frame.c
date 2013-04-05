@@ -17,23 +17,7 @@ SYSCALL init_frm()
   int i = 0;
   for(i = 0; i < NFRAMES; i++) 
   {
-	frm_tab[i].status = FRM_FREE;
-	frm_tab[i].refcnt = 0;
-	frm_tab[i].bs = -1;
-	frm_tab[i].bs_page = -1;
-	frm_tab[i].bs_next = NULL;
-	frm_tab[i].fifo = NULL;
-	frm_tab[i].age = 0;
-	frm_tab[i].frm_num = FRAME0 + i;
-	
-	frm_map[i].fr_status = FRM_UNMAPPED;
-	frm_map[i].fr_pid = -1;
-	frm_map[i].fr_vpno = -1;
-	frm_map[i].fr_refcnt = 0;
-	frm_map[i].fr_type = FR_PAGE;
-	frm_map[i].fr_dirty = -1;
-	frm_map[i].cookie = NULL;
-	frm_map[i].fr_loadtime = 0;
+	  free_frm(i);
   }
   return OK;
 }
@@ -47,7 +31,7 @@ SYSCALL get_frm(int* avail)
 	int i = 0;
 	for (i = 0; i < NFRAMES; i++) {
 		if(frm_tab[i].status == FRM_FREE){
-			*avail = frm_tab[i].frm_num;
+			*avail = i;
 			return OK;
 		}
 	}
@@ -61,8 +45,25 @@ SYSCALL get_frm(int* avail)
 SYSCALL free_frm(int i)
 {
 
-  kprintf("To be implemented!\n");
-  return OK;
+//	kprintf("freeing frame %d\n", i);
+	frm_tab[i].status = FRM_FREE;
+	frm_tab[i].refcnt = 0;
+	frm_tab[i].bs = -1;
+	frm_tab[i].bs_page = -1;
+	frm_tab[i].bs_next = NULL;
+	frm_tab[i].fifo = NULL;
+	frm_tab[i].age = 0;
+	frm_tab[i].frm_num = FRAME0 + i;
+
+	frm_map[i].fr_status = FRM_UNMAPPED;
+	frm_map[i].fr_pid = -1;
+	frm_map[i].fr_vpno = -1;
+	frm_map[i].fr_refcnt = 0;
+	frm_map[i].fr_type = FR_PAGE;
+	frm_map[i].fr_dirty = -1;
+	frm_map[i].cookie = NULL;
+	frm_map[i].fr_loadtime = 0;
+	return OK;
 }
 
 

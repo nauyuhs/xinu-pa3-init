@@ -83,7 +83,7 @@ int	resched()
 #ifdef	DEBUG
 	PrintSaved(nptr);
 #endif
-	write_cr3(nptr->pd->frm_num * NBPG );
+	write_cr3(nptr->pdbr * NBPG );
 	ctxsw(&optr->pesp, optr->pirmask, &nptr->pesp, nptr->pirmask);
 
 #ifdef	DEBUG

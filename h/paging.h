@@ -6,6 +6,7 @@ typedef unsigned int	 bsd_t;
 #define FP2FN(frm)  (((frm) - frm_map) + FRAME0)
 #define FN2ID(fn)   ((fn) - FRAME0)
 #define FP2PA(frm)  ((void*)(FP2FN(frm) * NBPG))
+#define VALID_MEM_FRM(frm) (frm >= 1024 && frm <= 2047)
 #define NBPG		4096	/* number of bytes per page	*/
 #define FRAME0		1024	/* zero-th frame		*/
 
@@ -152,6 +153,8 @@ SYSCALL read_bs(char *, bsd_t, int);
 SYSCALL write_bs(char *, bsd_t, int);
 void init_glb_pgs(int *idx_mapper);
 SYSCALL init_pg_dir(int *avail);
+SYSCALL free_pg_dir(frame_t *pd);
+SYSCALL free_frm(int i);
 
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
