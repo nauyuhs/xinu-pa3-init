@@ -44,8 +44,15 @@ SYSCALL init_frm()
  */
 SYSCALL get_frm(int* avail)
 {
-  kprintf("To be implemented!\n");
-  return OK;
+	int i = 0;
+	for (i = 0; i < NFRAMES; i++) {
+		if(frm_tab[i].status == FRM_FREE){
+			*avail = i;
+			return OK;
+		}
+
+	}
+  return SYSERR;
 }
 
 /*-------------------------------------------------------------------------

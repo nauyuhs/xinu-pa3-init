@@ -30,7 +30,7 @@ int main() {
 
 	if (xmmap(i, bs, 200) == SYSERR) {
 		kprintf("xmmap call failed\n");
-		return 0;
+//		return 0;
 	}
 
 	for (i = 0; i < 16; i++) {

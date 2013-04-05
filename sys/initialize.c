@@ -143,7 +143,7 @@ LOCAL
 sysinit()
 {
 	static	long	currsp;
-	int	i,j;
+	int	i,j, avail;
 	struct	pentry	*pptr;
 	struct	sentry	*sptr;
 	struct	mblock	*mptr;
@@ -234,16 +234,17 @@ sysinit()
 	init_bsm();
 	init_frm();
 
-	//pt_t *ptr = (pt_t *)0x00400000;
 	int start = NFRAMES;
-	for(i = 0; i < 4; i++)
+	for(i = 0; i < NUM_GLB_PG_TBLS; i++)
 	{
-		frm_tab[i].status = FRM_PGT;
-		frm_tab[i].refcnt = MAXINT;
+		avail = 0;
+		get_frm(&avail);
+		frm_tab[avail].status = FRM_PGT;
+		frm_tab[avail].refcnt = MAXINT;
 
-		frm_map[i].fr_pid = 0;	
-		frm_map[i].fr_status = FRM_MAPPED;
-		frm_map[i].fr_type = FR_TBL;
+		frm_map[avail].fr_pid = 0;
+		frm_map[avail].fr_status = FRM_MAPPED;
+		frm_map[avail].fr_type = FR_TBL;
 	}
 	
 	frm_tab[4].status = FRM_PGD;

@@ -37,6 +37,8 @@ typedef unsigned int	 bsd_t;
 #define NBS 8
 /* Structure for a page directory entry */
 
+#define NUM_GLB_PG_TBLS 4
+
 typedef struct {
 
   unsigned int pd_pres	: 1;		/* page table present?		*/
