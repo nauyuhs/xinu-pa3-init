@@ -11,11 +11,12 @@ int get_bs(bsd_t bs_id, unsigned int npages) {
 
 	disable(ps);
 
-	if(npages == 0 || npages > 256) {
+	if((npages == 0 || npages > 256) || (bs_id < 0 || bs_id > MAX_ID) ||bs_tab[bs_id].as_heap) {
 		restore(ps);
 		return(SYSERR);
 	}
 
+	enable(ps);
     return npages;
 
 }

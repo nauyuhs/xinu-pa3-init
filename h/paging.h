@@ -114,6 +114,7 @@ typedef struct _bs_map_t {
 	int pid; /* process mapped this backstore*/
 	int vpno; /* first virtual page the bs mapped to*/
 	int npages;
+	int status;
 } bs_map_t; //kernel
 
 typedef struct {
@@ -155,7 +156,9 @@ void init_glb_pgs(int *idx_mapper);
 SYSCALL init_pg_dir(int *avail);
 SYSCALL free_pg_dir(frame_t *pd);
 SYSCALL free_frm(int i);
-
+int find_page(int start_vpage, int npages, int vaddr);
+void uninit_pg_tbl(int frm_num);
+void uninit_pg_dir(int frm_num);
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/

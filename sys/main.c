@@ -13,8 +13,8 @@ void halt();
  *------------------------------------------------------------------------
  */
 int main() {
-//	char *addr = (char*) 0x40000000; //1G
-	char *addr = (char*) (2048*4096);
+	char *addr = (char*) 0x40000000; //1G
+//	char *addr = (char*) (2048*4096);
 	bsd_t bs = 1;
 
 	int i = ((unsigned long) addr) >> 12;	// the ith page

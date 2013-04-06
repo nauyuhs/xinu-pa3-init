@@ -100,6 +100,8 @@ SYSCALL create(procaddr,ssize,priority,name,nargs,args)
 	kprintf("main proc pd = %d\n", avail);
 	pptr->pdbr = frm_tab[avail].frm_num;
 	pptr->pd = &frm_tab[avail];
+	for(i = 0; i < NBS;i++)
+		pptr->map[i].status = BSM_UNMAPPED;
 	restore(ps);
 
 	return(pid);

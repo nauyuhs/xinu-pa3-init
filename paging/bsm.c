@@ -18,7 +18,7 @@ SYSCALL init_bsm()
 	for(i = 0;i < NBS; i++)
 	{
 		bs_tab[i].status = BSM_UNMAPPED;
-		bs_tab[i].as_heap = -1;
+		bs_tab[i].as_heap = 0;
 		bs_tab[i].npages = -1;
 		bs_tab[i].owners = NULL;
 		bs_tab[i].frm = NULL;
@@ -55,6 +55,17 @@ SYSCALL free_bsm(int i)
  */
 SYSCALL bsm_lookup(int pid, long vaddr, int* store, int* pageth)
 {
+	int  i;
+	struct pentry *pptr = &proctab[pid];
+	for(i = 0 ; i< NBS; i++){
+		bs_map_t *map = &(pptr->map[i]);
+		if(map->status == BSM_MAPPED && ((map->vpno + map->npages) * NBPG) > vaddr ){
+			*store = i;
+			*pageth = find_page(map->vpno, map->npages, vaddr);
+			return OK;
+		}
+	}
+	return SYSERR;
 }
 
 
@@ -74,6 +85,18 @@ SYSCALL bsm_map(int pid, int vpno, int source, int npages)
  */
 SYSCALL bsm_unmap(int pid, int vpno, int flag)
 {
+}
+
+
+int find_page(int start_vpage, int npages, int vaddr){
+	int  i;
+	for(i = start_vpage; i < (start_vpage + npages); i++){
+		if(vaddr >= i*NBPG && vaddr <= (i*NBPG + (NBPG - 1))){
+			 i -= start_vpage;
+			 return i;
+		}
+	}
+	return (int)0;
 }
 
 
