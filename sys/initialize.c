@@ -236,7 +236,7 @@ sysinit()
 	int start = NFRAMES;
 	init_glb_pgs(glb_pg_tbl_frm_mapping);
 	// init pg dir for proc 0
-	init_pg_dir(&avail);
+	init_pg_dir(&avail, NULLPROC);
 	pptr->pdbr = frm_tab[avail].frm_num;
 	pptr->pd = &frm_tab[avail];
 	return(OK);

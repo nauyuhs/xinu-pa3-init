@@ -35,14 +35,14 @@ init_glb_pgs(int *idx_mapper){
 	}
 }
 
-SYSCALL init_pg_dir(int *num) {
+SYSCALL init_pg_dir(int *num, int pid) {
 	int avail = 0, i;
 	get_frm(&avail);
 	*num = avail;
 	frm_tab[avail].status = FRM_PGD;
 	frm_tab[avail].refcnt = MAXINT;
 
-	frm_map[avail].fr_pid = 0;
+	frm_map[avail].fr_pid = pid;
 	frm_map[avail].fr_status = FRM_MAPPED;
 	frm_map[avail].fr_type = FR_DIR;
 
@@ -77,6 +77,7 @@ SYSCALL free_pg_dir(frame_t *pd){
 			ptr1++;
 		}
 	}
+	uninit_pg_dir(pd->frm_num);
 	// free the dir
 	free_frm(pd->frm_num);
 	pd = NULL;

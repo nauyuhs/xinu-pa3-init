@@ -14,7 +14,7 @@ bs_t bs_tab[NBS];
  */
 SYSCALL init_bsm()
 {
-	int i = 0;
+	int i = 0, j = 0;
 	for(i = 0;i < NBS; i++)
 	{
 		bs_tab[i].status = BSM_UNMAPPED;
@@ -22,6 +22,8 @@ SYSCALL init_bsm()
 		bs_tab[i].npages = -1;
 		bs_tab[i].owners = NULL;
 		bs_tab[i].frm = NULL;
+		for(j = 0 ; j < NUM_BS_PGS; j++)
+			bs_tab[i].pg_to_frm_map[j] = -1; /* init with no mapping  */
 
 		bs_map[i].next = NULL;
 		bs_map[i].bs = BSM_UNMAPPED;
@@ -97,6 +99,37 @@ int find_page(int start_vpage, int npages, int vaddr){
 		}
 	}
 	return (int)0;
+}
+
+frame_t *bs_get_frame(bsd_t id, int pageth){
+	int frm_num = 0;
+	if(bs_tab[id].pg_to_frm_map[pageth] != -1)
+		frm_num = bs_tab[id].pg_to_frm_map[pageth];
+	else{
+		get_frm(&frm_num);
+		bs_tab[id].pg_to_frm_map[pageth] = frm_num;
+		// put mapping in bs
+		if(bs_tab[id].frm == NULL)
+			bs_tab[id].frm  = &frm_tab[frm_num];
+		else{
+			frame_t *temp = bs_tab[id].frm ;
+			while(temp->bs_next != NULL)
+				temp  = temp->bs_next;
+			temp->bs_next = &frm_tab[frm_num];
+		}
+		// put mapping in frame
+		frm_tab[frm_num].bs = id;
+		frm_tab[frm_num].bs_page = pageth;
+		frm_tab[frm_num].status = FRM_BS;
+
+		frm_map[frm_num].fr_status = FRM_MAPPED;
+		frm_map[frm_num].fr_type = FRM_BS;
+		frm_map[frm_num].fr_vpno = proctab[currpid].map[id].vpno + pageth;
+
+		// now bring the page into memory
+		read_bs((char *)(frm_tab[frm_num].frm_num * NBPG), id, pageth );
+	}
+	return &frm_tab[frm_num];
 }
 
 

@@ -40,6 +40,8 @@ typedef unsigned int	 bsd_t;
 
 #define NUM_GLB_PG_TBLS 4
 
+#define NUM_BS_PGS 256
+
 typedef struct {
 
   unsigned int pd_pres	: 1;		/* page table present?		*/
@@ -118,6 +120,7 @@ typedef struct _bs_map_t {
 } bs_map_t; //kernel
 
 typedef struct {
+	int pg_to_frm_map[NUM_BS_PGS];
 	int status;
 	int as_heap; /* is this bs used by heap?*/
 	int npages; /* number of pages in the store */
@@ -153,12 +156,13 @@ SYSCALL release_bs(bsd_t);
 SYSCALL read_bs(char *, bsd_t, int);
 SYSCALL write_bs(char *, bsd_t, int);
 void init_glb_pgs(int *idx_mapper);
-SYSCALL init_pg_dir(int *avail);
+SYSCALL init_pg_dir(int *avail, int pid);
 SYSCALL free_pg_dir(frame_t *pd);
 SYSCALL free_frm(int i);
 int find_page(int start_vpage, int npages, int vaddr);
 void uninit_pg_tbl(int frm_num);
 void uninit_pg_dir(int frm_num);
+frame_t *bs_get_frame(bsd_t id, int pageth);
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/

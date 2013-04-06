@@ -96,7 +96,7 @@ SYSCALL create(procaddr,ssize,priority,name,nargs,args)
 	*--saddr = 0;		/* %esi */
 	*--saddr = 0;		/* %edi */
 	*pushsp = pptr->pesp = (unsigned long)saddr;
-	init_pg_dir(&avail);
+	init_pg_dir(&avail, pid);
 	kprintf("main proc pd = %d\n", avail);
 	pptr->pdbr = frm_tab[avail].frm_num;
 	pptr->pd = &frm_tab[avail];
