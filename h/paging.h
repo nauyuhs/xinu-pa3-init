@@ -163,6 +163,7 @@ int find_page(int start_vpage, int npages, int vaddr);
 void uninit_pg_tbl(int frm_num);
 void uninit_pg_dir(int frm_num);
 frame_t *bs_get_frame(bsd_t id, int pageth);
+unsigned long add_pg_dir_entry_for_pg_fault(int pid, unsigned int pg_dir_offset, unsigned int pg_tbl_offset, frame_t * frm );
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/

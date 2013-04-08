@@ -17,8 +17,16 @@ SYSCALL pfint() {
 	unsigned long vaddr = read_cr2();
 	bsm_lookup(currpid, vaddr, &store, &pageth);
 	frame_t * frm = bs_get_frame(store, pageth);
+	unsigned int pg_dir_offset = (vaddr & 0xFFC00000) >> 22;
+	unsigned int pg_tbl_offset = (vaddr & 0x3FF000) >> 12;
+	unsigned long pdbr = add_pg_dir_entry_for_pg_fault(currpid, pg_dir_offset, pg_tbl_offset, frm);
+//	write_cr3(pdbr * NBPG);
+//	restore(ps);
+//	flush_cr3();
 	restore(ps);
-	kprintf("store = %d and pageth = %d and allocated frame is %d\n", store , pageth, frm->frm_num);
+	pd_t *ptr = (pd_t *) ((1029 * NBPG) );
+	pt_t *ptr1 = (pt_t *) ((1031 * NBPG));
+	kprintf("assigned frm num %d for addr %x\n", frm->frm_num, vaddr);
 	return OK;
 }
 

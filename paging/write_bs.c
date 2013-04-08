@@ -13,6 +13,7 @@ int write_bs(char *src, bsd_t bs_id, int page) {
   */
    char * phy_addr = BACKING_STORE_BASE + bs_id<<20 + page*NBPG;
    bcopy((void*)src, phy_addr, NBPG);
+   return OK;
 
 }
 

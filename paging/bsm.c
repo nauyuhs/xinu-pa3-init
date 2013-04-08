@@ -103,8 +103,9 @@ int find_page(int start_vpage, int npages, int vaddr){
 
 frame_t *bs_get_frame(bsd_t id, int pageth){
 	int frm_num = 0;
-	if(bs_tab[id].pg_to_frm_map[pageth] != -1)
+	if(bs_tab[id].pg_to_frm_map[pageth] != -1){
 		frm_num = bs_tab[id].pg_to_frm_map[pageth];
+	}
 	else{
 		get_frm(&frm_num);
 		bs_tab[id].pg_to_frm_map[pageth] = frm_num;
