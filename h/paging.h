@@ -33,6 +33,7 @@ typedef unsigned int	 bsd_t;
 #define MAX_ID          7              /* You get 8 mappings, 0 - 8 */
 
 #define BACKING_STORE_BASE	0x00800000
+
 #define BACKING_STORE_UNIT_SIZE 0x00100000
 
 #define NBS 8
@@ -164,6 +165,9 @@ void uninit_pg_tbl(int frm_num);
 void uninit_pg_dir(int frm_num);
 frame_t *bs_get_frame(bsd_t id, int pageth);
 unsigned long add_pg_dir_entry_for_pg_fault(int pid, unsigned int pg_dir_offset, unsigned int pg_tbl_offset, frame_t * frm );
+SYSCALL remove_owner_mapping(bsd_t id, int pid);
+void free_frms_for_bs(bsd_t id);
+void free_bs_frame(int frm_num);
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/

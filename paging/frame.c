@@ -59,7 +59,7 @@ SYSCALL free_frm(int i)
 	frm_map[i].fr_pid = -1;
 	frm_map[i].fr_vpno = -1;
 	frm_map[i].fr_refcnt = 0;
-	frm_map[i].fr_type = FR_PAGE;
+	frm_map[i].fr_type = FRM_FREE;
 	frm_map[i].fr_dirty = -1;
 	frm_map[i].cookie = NULL;
 	frm_map[i].fr_loadtime = 0;

@@ -10,7 +10,7 @@ SYSCALL read_bs(char *dst, bsd_t bs_id, int page) {
   /* fetch page page from map map_id
      and write beginning at dst.
   */
-   void * phy_addr = BACKING_STORE_BASE + bs_id<<20 + page*NBPG;
+   void * phy_addr = (BACKING_STORE_BASE) + (bs_id<<20) + (page*NBPG);
    bcopy(phy_addr, (void*)dst, NBPG);
    return OK;
 }
