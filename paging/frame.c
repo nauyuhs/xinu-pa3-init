@@ -6,6 +6,9 @@
 
 //fr_map_t frm_map[NFRAMES];
 frame_t frm_tab[NFRAMES];
+frame_t *free_frm_list;
+occupied_frm_list unfree_frm_list;
+
 /*-------------------------------------------------------------------------
  * init_frm - initialize frm_tab
  *-------------------------------------------------------------------------
@@ -17,8 +20,17 @@ SYSCALL init_frm()
   int i = 0;
   for(i = 0; i < NFRAMES; i++) 
   {
-	  free_frm(i);
+		frm_tab[i].status = FRM_FREE;
+		frm_tab[i].refcnt = 0;
+		frm_tab[i].bs = -1;
+		frm_tab[i].bs_page = -1;
+		frm_tab[i].bs_next = NULL;
+		frm_tab[i].fifo = NULL;
+		frm_tab[i].age = 0;
+		frm_tab[i].frm_num = FRAME0 + i;
+		add_to_free_frm_list(&frm_tab[i]);
   }
+  unfree_frm_list.head = unfree_frm_list.tail = NULL;
   return OK;
 }
 
@@ -42,25 +54,18 @@ SYSCALL get_frm(int* avail)
  * free_frm - free a frame 
  *-------------------------------------------------------------------------
  */
-SYSCALL free_frm(int i)
+SYSCALL free_frm(frame_t *frm)
 {
 
 //	kprintf("freeing frame %d\n", i);
-	frm_tab[i].status = FRM_FREE;
-	frm_tab[i].refcnt = 0;
-	frm_tab[i].bs = -1;
-	frm_tab[i].bs_page = -1;
-	frm_tab[i].bs_next = NULL;
-	frm_tab[i].fifo = NULL;
-	frm_tab[i].age = 0;
-	frm_tab[i].frm_num = FRAME0 + i;
+
+	kprintf("request to free frame %d of type %d\n", frm->frm_num, frm->fr_type);
+
 	return OK;
 }
 
 frame_t *get_free_frame(){
-	int avail = 0;
-	get_frm(&avail);
-	return &frm_tab[avail];
+	return get_from_free_frm_list();
 }
 
 frame_t *get_frm_from_frm_num(int frm_num){
@@ -71,6 +76,42 @@ frame_t *get_frm_from_frm_num(int frm_num){
 		}
 	}
 	return 0;
+}
+
+
+
+void add_to_free_frm_list(frame_t *frm){
+	frm->fifo = NULL;
+	if(free_frm_list == NULL)
+		free_frm_list = frm;
+	else{
+		frame_t *tmp = free_frm_list;
+		while(tmp->fifo != NULL)
+			tmp = tmp->fifo;
+		tmp->fifo = frm;
+	}
+}
+
+frame_t *get_from_free_frm_list(){
+	if(free_frm_list == NULL){
+		kprintf("no frames in free list need to evict\n");
+		return NULL;
+	}
+	// get the first free frame
+	frame_t * tmp = free_frm_list;
+	free_frm_list = tmp->fifo;
+	add_to_ocuupied_frm_list(tmp);
+	kprintf("returning frm %d from free list \n", tmp->frm_num);
+	return tmp;
+}
+
+void add_to_ocuupied_frm_list(frame_t *frm){
+	frm->fifo = NULL;
+	if(unfree_frm_list.head == NULL){
+		unfree_frm_list.head = unfree_frm_list.tail = frm;
+	}
+	unfree_frm_list.tail->fifo = frm;
+	unfree_frm_list.tail = frm;
 }
 
 

@@ -101,8 +101,10 @@ SYSCALL create(procaddr,ssize,priority,name,nargs,args)
 	kprintf("main proc pd = %d\n", pg_dir->frm_num);
 	pptr->pdbr = pg_dir->frm_num;
 	pptr->pd = pg_dir;
-	for(i = 0; i < NBS;i++)
+	for(i = 0; i < NBS;i++){
 		pptr->map[i].status = BSM_UNMAPPED;
+		pptr->map[i].frm = NULL;
+	}
 	restore(ps);
 
 	return(pid);

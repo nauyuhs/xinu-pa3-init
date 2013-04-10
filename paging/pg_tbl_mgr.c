@@ -118,13 +118,13 @@ SYSCALL free_pg_dir(frame_t *pd){
 	// free the page tables
 	for(i = NUM_GLB_PG_TBLS; i < NUM_PG_TBL_ENTRIES; i++){
 		if(ptr1->pd_pres == 1 ){
-			free_frm(ptr1->pd_base);
+			free_frm(get_frm_from_frm_num(ptr1->pd_base));
 			ptr1++;
 		}
 	}
 	kprintf("freed pd dir at %d \n", pd->frm_num);
 	// free the dir
-	free_frm(pd->frm_num);
+	free_frm(get_frm_from_frm_num(pd->frm_num));
 	pd = NULL;
 	return OK;
 }
@@ -182,6 +182,7 @@ unsigned long add_pg_dir_entry_for_pg_fault(int pid, unsigned int pg_dir_offset,
 		// create pd entry as it is absent
 		frame_t * pg_tbl = create_pg_tbl(currpid);
 		make_pg_dir_entry(pg_dir, pg_dir_offset, pg_tbl->frm_num);
+		make_pg_tbl_entry(pg_tbl, pg_tbl_offset, frm->frm_num);
 		pg_tbl_frm = pg_tbl->frm_num ;
 	}
     return pptr->pdbr;

@@ -109,6 +109,15 @@ typedef struct _frame_t {
 	unsigned long int fr_loadtime;	/* when the page is loaded 	*/
 } frame_t; //kernel
 
+extern frame_t *free_frm_list;
+
+typedef struct{
+	frame_t *head;
+	frame_t *tail;
+}occupied_frm_list;
+
+extern occupied_frm_list unfree_frm_list;
+
 
 
 //typedef struct{
@@ -128,6 +137,7 @@ typedef struct _bs_map_t {
 	int vpno; /* first virtual page the bs mapped to*/
 	int npages;
 	int status;
+	frame_t *frm; /* the list of frames that maps this bs*/
 } bs_map_t; //kernel
 
 typedef struct {
@@ -171,7 +181,7 @@ SYSCALL write_bs(char *, bsd_t, int);
 void init_glb_pgs(int *idx_mapper);
 SYSCALL init_pg_dir(frame_t *frm, int pid);
 SYSCALL free_pg_dir(frame_t *pd);
-SYSCALL free_frm(int i);
+SYSCALL free_frm(frame_t *frm);
 int find_page(int start_vpage, int npages, int vaddr);
 void uninit_pg_tbl(int frm_num);
 void uninit_pg_dir(int frm_num);
@@ -198,6 +208,14 @@ frame_t *get_frm_from_frm_num(int frm_num);
 void remove_pg_tbl_entries(frame_t *pg_dir, int vaddr, int num_pgs);
 
 void get_virt_addr(virt_addr_t *vaddr_t, unsigned long vaddr);
+
+void init_frm_lists();
+
+void add_to_free_frm_list(frame_t *frm);
+frame_t *get_from_free_frm_list();
+void add_to_ocuupied_frm_list(frame_t *frm);
+
+void add_mapping_to_proc_frm_list(frame_t *frm, bsd_t id, int pid);
 
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
