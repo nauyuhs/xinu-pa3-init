@@ -119,9 +119,11 @@ SYSCALL bsm_unmap(int pid, int vpno, int flag)
 	kprintf("calling unmap for pid = %d and vpno = %d\n", pid, vpno);
 	int i;
 	struct pentry *pptr = &proctab[pid];
+
 	for(i = 0; i < NBS; i++){
 		bs_map_t *map = &(pptr->map[i]);
 		if(map->status == BSM_MAPPED && map->vpno == vpno){
+			remove_pg_tbl_entries(pptr->pd, map->vpno , map->npages);
 			map->status = BSM_UNMAPPED;
 			map->vpno  = 0;
 			map->npages = 0;

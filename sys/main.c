@@ -49,5 +49,7 @@ int main() {
 
 	addr = (char*) 0x901000;
 	kprintf("val in bs 1 pg 0 %c\n", *addr);
+	pt_t *ptt = (pt_t *)(1031* 4096);
+	kprintf("pg aftr deletion %d\n", (ptt + 1)->pt_base);
 	return 0;
 }

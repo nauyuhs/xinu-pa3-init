@@ -76,15 +76,12 @@ typedef struct {
 } pt_t;
 
 typedef struct{
-  unsigned int pg_offset : 12;		/* page offset			*/
-  unsigned int pt_offset : 10;		/* page table offset		*/
-  unsigned int pd_offset : 10;		/* page directory offset	*/
+  unsigned int pg_offset ;		/* page offset			*/
+  unsigned int pt_offset ;		/* page table offset		*/
+  unsigned int pd_offset ;		/* page directory offset	*/
 } virt_addr_t;
 
-typedef union {
-	virt_addr_t vaddr_t;
-	unsigned long addr;
-}virt_addr;
+
 
 typedef struct _frame_t {
 	int status; /* FRM_FREE, FRM_PGD, FRM_PGT, FRM_BS*/
@@ -198,7 +195,9 @@ void remove_pg_dir_entry(frame_t *frm, int idx);
 
 frame_t *get_frm_from_frm_num(int frm_num);
 
-virt_addr_t *get_virtual_add_frm_virtualpg_num(unsigned long pg_num);
+void remove_pg_tbl_entries(frame_t *pg_dir, int vaddr, int num_pgs);
+
+void get_virt_addr(virt_addr_t *vaddr_t, unsigned long vaddr);
 
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
