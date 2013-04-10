@@ -96,10 +96,11 @@ SYSCALL create(procaddr,ssize,priority,name,nargs,args)
 	*--saddr = 0;		/* %esi */
 	*--saddr = 0;		/* %edi */
 	*pushsp = pptr->pesp = (unsigned long)saddr;
-	init_pg_dir(&avail, pid);
-	kprintf("main proc pd = %d\n", avail);
-	pptr->pdbr = frm_tab[avail].frm_num;
-	pptr->pd = &frm_tab[avail];
+	frame_t *pg_dir = get_free_frame();
+	init_pg_dir(pg_dir, pid);
+	kprintf("main proc pd = %d\n", pg_dir->frm_num);
+	pptr->pdbr = pg_dir->frm_num;
+	pptr->pd = pg_dir;
 	for(i = 0; i < NBS;i++)
 		pptr->map[i].status = BSM_UNMAPPED;
 	restore(ps);

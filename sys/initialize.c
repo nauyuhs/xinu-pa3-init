@@ -236,9 +236,10 @@ sysinit()
 	int start = NFRAMES;
 	init_glb_pgs(glb_pg_tbl_frm_mapping);
 	// init pg dir for proc 0
-	init_pg_dir(&avail, NULLPROC);
-	pptr->pdbr = frm_tab[avail].frm_num;
-	pptr->pd = &frm_tab[avail];
+	frame_t *pg_dir = get_free_frame();
+	init_pg_dir(pg_dir, NULLPROC);
+	pptr->pdbr = pg_dir->frm_num;
+	pptr->pd = pg_dir;
 	return(OK);
 }
 

@@ -4,7 +4,7 @@
 #include <proc.h>
 #include <paging.h>
 
-fr_map_t frm_map[NFRAMES];
+//fr_map_t frm_map[NFRAMES];
 frame_t frm_tab[NFRAMES];
 /*-------------------------------------------------------------------------
  * init_frm - initialize frm_tab
@@ -54,16 +54,23 @@ SYSCALL free_frm(int i)
 	frm_tab[i].fifo = NULL;
 	frm_tab[i].age = 0;
 	frm_tab[i].frm_num = FRAME0 + i;
-
-	frm_map[i].fr_status = FRM_UNMAPPED;
-	frm_map[i].fr_pid = -1;
-	frm_map[i].fr_vpno = -1;
-	frm_map[i].fr_refcnt = 0;
-	frm_map[i].fr_type = FRM_FREE;
-	frm_map[i].fr_dirty = -1;
-	frm_map[i].cookie = NULL;
-	frm_map[i].fr_loadtime = 0;
 	return OK;
+}
+
+frame_t *get_free_frame(){
+	int avail = 0;
+	get_frm(&avail);
+	return &frm_tab[avail];
+}
+
+frame_t *get_frm_from_frm_num(int frm_num){
+	int i = 0;
+	for (i = 0; i < NFRAMES; i++) {
+		if (frm_tab[i].frm_num == frm_num) {
+			return &frm_tab[i];
+		}
+	}
+	return 0;
 }
 
 

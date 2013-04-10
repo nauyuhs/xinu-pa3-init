@@ -3,7 +3,7 @@
 #define _PAGING_H_
 
 typedef unsigned int	 bsd_t;
-#define FP2FN(frm)  (((frm) - frm_map) + FRAME0)
+//#define FP2FN(frm)  (((frm) - frm_map) + FRAME0)
 #define FN2ID(fn)   ((fn) - FRAME0)
 #define FP2PA(frm)  ((void*)(FP2FN(frm) * NBPG))
 #define VALID_MEM_FRM(frm) (frm >= 1024 && frm <= 2047)
@@ -81,10 +81,15 @@ typedef struct{
   unsigned int pd_offset : 10;		/* page directory offset	*/
 } virt_addr_t;
 
+typedef union {
+	virt_addr_t vaddr_t;
+	unsigned long addr;
+}virt_addr;
+
 typedef struct _frame_t {
 	int status; /* FRM_FREE, FRM_PGD, FRM_PGT, FRM_BS*/
 
-	/*If the frame is a FRM_PGT, refcnt is the number of mappings install 
+	/*If the frame is a FRM_PGT, refcnt is the number of mappings install
 	 in this PGT. release it when refcnt is zero. When the frame is
 	 a FRM_BS, how many times this frame is mapped by processes. If refcnt
 	 is zero, time to release the page*/
@@ -99,7 +104,15 @@ typedef struct _frame_t {
 	struct _frame_t *fifo; /* when the page is loaded, in ticks*/
 	int age; /* Used for page replacement policy AGING */
 	int frm_num;
+	int fr_pid;				/* process id using this frame  */
+	int fr_vpno;				/* corresponding virtual page no*/
+	int fr_type;				/* FR_DIR, FR_TBL, FR_PAGE	*/
+	int fr_dirty;
+	void *cookie;				/* private data structure	*/
+	unsigned long int fr_loadtime;	/* when the page is loaded 	*/
 } frame_t; //kernel
+
+
 
 //typedef struct{
  // int bs_status;			/* MAPPED or UNMAPPED		*/
@@ -129,19 +142,21 @@ typedef struct {
 	frame_t *frm; /* the list of frames that maps this bs*/
 } bs_t; //kernel
 
-typedef struct{
-  int fr_status;			/* MAPPED or UNMAPPED		*/
-  int fr_pid;				/* process id using this frame  */
-  int fr_vpno;				/* corresponding virtual page no*/
-  int fr_refcnt;			/* reference count number of things pointing to your page*/
-  int fr_type;				/* FR_DIR, FR_TBL, FR_PAGE	*/
-  int fr_dirty;
-  void *cookie;				/* private data structure	*/
-  unsigned long int fr_loadtime;	/* when the page is loaded 	*/
-}fr_map_t;
+
+
+//typedef struct{
+//  int fr_status;			/* MAPPED or UNMAPPED		*/
+//  int fr_pid;				/* process id using this frame  */
+//  int fr_vpno;				/* corresponding virtual page no*/
+//  int fr_refcnt;			/* reference count number of things pointing to your page*/
+//  int fr_type;				/* FR_DIR, FR_TBL, FR_PAGE	*/
+//  int fr_dirty;
+//  void *cookie;				/* private data structure	*/
+//  unsigned long int fr_loadtime;	/* when the page is loaded 	*/
+//}fr_map_t;
 
 extern bs_map_t bs_map[NBS];
-extern fr_map_t frm_map[NFRAMES];
+//extern fr_map_t frm_map[NFRAMES];
 extern bs_t bs_tab[NBS];
 extern frame_t frm_tab[NFRAMES];
 extern int glb_pg_tbl_frm_mapping[];
@@ -157,7 +172,7 @@ SYSCALL release_bs(bsd_t);
 SYSCALL read_bs(char *, bsd_t, int);
 SYSCALL write_bs(char *, bsd_t, int);
 void init_glb_pgs(int *idx_mapper);
-SYSCALL init_pg_dir(int *avail, int pid);
+SYSCALL init_pg_dir(frame_t *frm, int pid);
 SYSCALL free_pg_dir(frame_t *pd);
 SYSCALL free_frm(int i);
 int find_page(int start_vpage, int npages, int vaddr);
@@ -168,6 +183,23 @@ unsigned long add_pg_dir_entry_for_pg_fault(int pid, unsigned int pg_dir_offset,
 SYSCALL remove_owner_mapping(bsd_t id, int pid);
 void free_frms_for_bs(bsd_t id);
 void free_bs_frame(int frm_num);
+
+frame_t *get_free_frame();
+
+void make_pg_tbl_entry(frame_t *frm, int idx, int base);
+
+void remove_pg_tbl_entry(frame_t *frm, int idx);
+
+frame_t * create_pg_tbl(int pid);
+
+void make_pg_dir_entry(frame_t *frm, int idx, int base);
+
+void remove_pg_dir_entry(frame_t *frm, int idx);
+
+frame_t *get_frm_from_frm_num(int frm_num);
+
+virt_addr_t *get_virtual_add_frm_virtualpg_num(unsigned long pg_num);
+
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/

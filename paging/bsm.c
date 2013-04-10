@@ -82,6 +82,8 @@ SYSCALL bsm_lookup(int pid, long vaddr, int* store, int* pageth)
  *-------------------------------------------------------------------------
  */
 SYSCALL bsm_map(int pid, int vpno, int source, int npages) {
+
+	kprintf("mapping called for bs = %d\n", source);
 	if (bs_tab[source].status == BSM_UNMAPPED) {
 		bs_tab[source].status = BSM_MAPPED;
 		bs_tab[source].npages = npages;
@@ -96,20 +98,13 @@ SYSCALL bsm_map(int pid, int vpno, int source, int npages) {
 	map->status = BSM_MAPPED;
 
 	bs_t *tab = &bs_tab[source];
-	bs_map_t owner/* = (bs_map_t * )malloc(sizeof(bs_map_t))*/;
-	owner.bs = source;
-	owner.next = NULL;
-	owner.npages = npages;
-	owner.pid = pid;
-	owner.vpno = vpno;
-	if (tab->owners == NULL)
-		tab->owners = &owner;
-	else {
-		bs_map_t *temp = tab->owners;
-		while (temp->next != NULL)
-			temp = temp->next;
-		temp->next = &owner;
-	}
+	bs_map_t *owner = (bs_map_t *)getmem(sizeof(bs_map_t));
+	owner->bs = source;
+	owner->npages = npages;
+	owner->pid = pid;
+	owner->vpno = vpno;
+	owner->next = tab->owners;
+	tab->owners = owner;
 	return OK;
 }
 
@@ -152,51 +147,51 @@ int find_page(int start_vpage, int npages, int vaddr){
 }
 
 frame_t *bs_get_frame(bsd_t id, int pageth){
-	int frm_num = 0;
 	if(bs_tab[id].pg_to_frm_map[pageth] != -1){
-		frm_num = bs_tab[id].pg_to_frm_map[pageth];
+		return get_frm_from_frm_num(bs_tab[id].pg_to_frm_map[pageth]);
 	}
 	else{
-		get_frm(&frm_num);
-		bs_tab[id].pg_to_frm_map[pageth] = frm_num;
+		frame_t *bs_frm = get_free_frame();
+		bs_tab[id].pg_to_frm_map[pageth] = bs_frm->frm_num;
 		// put mapping in bs
 		if(bs_tab[id].frm == NULL)
-			bs_tab[id].frm  = &frm_tab[frm_num];
+			bs_tab[id].frm  = bs_frm;
 		else{
 			frame_t *temp = bs_tab[id].frm ;
 			while(temp->bs_next != NULL)
 				temp  = temp->bs_next;
-			temp->bs_next = &frm_tab[frm_num];
+			temp->bs_next = bs_frm;
 		}
 		// put mapping in frame
-		frm_tab[frm_num].bs = id;
-		frm_tab[frm_num].bs_page = pageth;
-		frm_tab[frm_num].status = FRM_BS;
-
-		frm_map[frm_num].fr_status = FRM_MAPPED;
-		frm_map[frm_num].fr_type = FRM_BS;
-		frm_map[frm_num].fr_vpno = proctab[currpid].map[id].vpno + pageth;
-
+		bs_frm->bs = id;
+		bs_frm->bs_page = pageth;
+		bs_frm->status = FRM_BS;
+		bs_frm->fr_type = FR_PAGE;
 		// now bring the page into memory
-		read_bs((char *)(frm_tab[frm_num].frm_num * NBPG), id, pageth );
+		read_bs((char *)(bs_frm->frm_num * NBPG), id, pageth );
+		return bs_frm;
 	}
-	return &frm_tab[frm_num];
 }
 
 SYSCALL remove_owner_mapping(bsd_t source, int pid){
+	kprintf("source = %d and pid = %d\n", source, pid);
 	bs_t *tab = &bs_tab[source];
+	bs_map_t *prev = NULL;
 	bs_map_t *temp = tab->owners;
 	while(temp != NULL){
-		if(temp->next->pid == pid){
-			bs_map_t *next = temp->next;
+		if(temp->pid == pid){
 			if(temp == tab->owners){
 				tab->owners = NULL;
 			}
-			else
-				temp->next = next->next;
-			next->next = NULL;
+			else{
+				prev->next = temp->next;
+				temp->next = NULL;
+			}
+			freemem((struct mblock *)temp, sizeof(bs_map_t));
+			kprintf("owner removed\n");
 			return OK;
 		}
+		prev = temp;
 		temp = temp->next;
 	}
 	return SYSERR;
@@ -204,14 +199,15 @@ SYSCALL remove_owner_mapping(bsd_t source, int pid){
 }
 
 void free_frms_for_bs(bsd_t id){
-	int i;
+	int i, frm_num;
 	for(i = 0; i < NUM_BS_PGS; i++){
-		if(bs_tab[id].pg_to_frm_map[i] > -1){
-			free_bs_frame(bs_tab[id].pg_to_frm_map[i]);
+		frm_num = bs_tab[id].pg_to_frm_map[i];
+		if(frm_num > -1){
+			free_bs_frame(frm_num);
 			// remove it from the list as well
 			frame_t *temp = bs_tab[id].frm ;
 			while(temp != NULL){
-				if(temp->bs_next->frm_num == bs_tab[id].pg_to_frm_map[i]){
+				if(temp->bs_next->frm_num == frm_num){
 					frame_t *nxt = temp->bs_next;
 					if(temp == bs_tab[id].frm ) bs_tab[id].frm = NULL;
 					else
@@ -228,15 +224,15 @@ void free_frms_for_bs(bsd_t id){
 }
 
 void free_bs_frame(int frm_num){
-	write_bs(frm_tab[frm_num].frm_num * NBPG,
-			frm_tab[frm_num].bs, frm_tab[frm_num].bs_page);
-	frm_tab[frm_num].bs = -1;
-	frm_tab[frm_num].bs_page = -1;
-	frm_tab[frm_num].status = FRM_FREE;
 
-	frm_map[frm_num].fr_status = FRM_UNMAPPED;
-	frm_map[frm_num].fr_type = FRM_FREE;
-	frm_map[frm_num].fr_vpno = 0;
+	frame_t *frm = get_frm_from_frm_num(frm_num);
+	write_bs((char *)(frm->frm_num * NBPG),
+			frm->bs, frm->bs_page);
+	frm->bs = -1;
+	frm->bs_page = -1;
+	frm->status = FRM_FREE;
 }
+
+
 
 
