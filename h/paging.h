@@ -217,6 +217,8 @@ void add_to_ocuupied_frm_list(frame_t *frm);
 
 void add_mapping_to_proc_frm_list(frame_t *frm, bsd_t id, int pid);
 
+void remove_from_ocuupied_frm_list(frame_t *frm);
+
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/

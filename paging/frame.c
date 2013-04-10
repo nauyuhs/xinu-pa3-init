@@ -57,10 +57,16 @@ SYSCALL get_frm(int* avail)
 SYSCALL free_frm(frame_t *frm)
 {
 
-//	kprintf("freeing frame %d\n", i);
 
 	kprintf("request to free frame %d of type %d\n", frm->frm_num, frm->fr_type);
-
+	if(frm->fr_type == FR_PAGE){
+		write_bs((char *)(frm->frm_num * NBPG), frm->bs, frm->bs_page);
+	}
+	remove_from_ocuupied_frm_list(frm);
+	add_to_free_frm_list(frm);
+	frm->bs = -1;
+	frm->bs_page = -1;
+	frm->status = FRM_FREE;
 	return OK;
 }
 
@@ -112,6 +118,27 @@ void add_to_ocuupied_frm_list(frame_t *frm){
 	}
 	unfree_frm_list.tail->fifo = frm;
 	unfree_frm_list.tail = frm;
+}
+
+void remove_from_ocuupied_frm_list(frame_t *frm){
+	frame_t *prev = unfree_frm_list.head;
+	frame_t *curr = unfree_frm_list.head;
+	while(curr != NULL ){
+		if(curr == frm){
+			kprintf("rmoving frm occupied list frm = %d\n", curr->frm_num);
+			prev->fifo = curr->fifo;
+			if(curr == unfree_frm_list.head){
+				unfree_frm_list.head = curr->fifo;
+			}
+			if(curr == unfree_frm_list.tail){
+				unfree_frm_list.tail = prev;
+			}
+			curr->fifo = NULL;
+			return;
+		}
+		prev= curr;
+		curr = curr->fifo;
+	}
 }
 
 

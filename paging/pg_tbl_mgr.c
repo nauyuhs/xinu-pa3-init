@@ -112,17 +112,16 @@ SYSCALL init_pg_dir(frame_t *frm, int pid) {
 SYSCALL free_pg_dir(frame_t *pd){
 	int i;
 	pd_t *ptr1 = (pd_t *)(NBPG * pd->frm_num);
-	kprintf("freeing dir for proc %d\n", currpid);
 	// dont free global pages
 	ptr1 += NUM_GLB_PG_TBLS;
 	// free the page tables
-	for(i = NUM_GLB_PG_TBLS; i < NUM_PG_TBL_ENTRIES; i++){
+	for(i = 0; i < NUM_PG_TBL_ENTRIES-NUM_GLB_PG_TBLS; i++){
 		if(ptr1->pd_pres == 1 ){
 			free_frm(get_frm_from_frm_num(ptr1->pd_base));
-			ptr1++;
 		}
+		ptr1++;
 	}
-	kprintf("freed pd dir at %d \n", pd->frm_num);
+	kprintf("freed pg dir at %d \n", pd->frm_num);
 	// free the dir
 	free_frm(get_frm_from_frm_num(pd->frm_num));
 	pd = NULL;

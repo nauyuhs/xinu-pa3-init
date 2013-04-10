@@ -117,15 +117,18 @@ SYSCALL bsm_map(int pid, int vpno, int source, int npages) {
 SYSCALL bsm_unmap(int pid, int vpno, int flag)
 {
 	kprintf("calling unmap for pid = %d and vpno = %d\n", pid, vpno);
-//	int i, store, pageth;
-//	struct pentry *pptr = &proctab[pid];
-//	bsm_lookup(pid, vpno*NBPG, &store, &pageth);
-//	bs_map_t *map = &(pptr->map[store]);
-//	remove_pg_tbl_entries(pptr->pd, map->vpno , map->npages);
-//	frame_t *frms= map->frm;
-//	while(frms != NULL)
-//		free_frm(frms);
-//	remove_owner_mapping(map->bs, pid);
+	int i, store, pageth;
+	struct pentry *pptr = &proctab[pid];
+	bsm_lookup(pid, vpno*NBPG, &store, &pageth);
+	kprintf("store = %d and pageth = %d\n", store, pageth);
+	bs_map_t *map = &(pptr->map[store]);
+	remove_pg_tbl_entries(pptr->pd, map->vpno , map->npages);
+	frame_t *frms= map->frm;
+	while(frms != NULL){
+		free_frm(frms);
+		frms = frms ->bs_next;
+	}
+	remove_owner_mapping(map->bs, pid);
 
 
 //	for(i = 0; i < NBS; i++){
@@ -226,7 +229,7 @@ void add_mapping_to_proc_frm_list(frame_t *frm, bsd_t id, int pid){
 		frame_t *tmp = map->frm;
 		while(tmp->bs_next != NULL)
 			tmp = tmp->bs_next;
-		tmp = frm;
+		tmp->bs_next = frm;
 	}
 	frm->fr_vpno = map->vpno;
 }
