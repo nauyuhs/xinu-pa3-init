@@ -187,4 +187,17 @@ unsigned long add_pg_dir_entry_for_pg_fault(int pid, unsigned int pg_dir_offset,
     return pptr->pdbr;
 }
 
+void remove_pg_tbl_entries(frame_t *pg_dir, int vpno, int num_pgs){
+	int  i;
+	for(i = vpno; i < vpno + num_pgs; i++){
+		unsigned long vaddr = i * NBPG;
+		unsigned int pd_offset = (vaddr & 0xFFC00000) >> 22;
+		unsigned int pt_offset = (vaddr & 0x3FF000) >> 12;
+		pd_t *tmp1 = (pd_t *) ((NBPG * pg_dir->frm_num) + pd_offset * sizeof(pd_t));
+		if(tmp1->pd_pres == 1){
+			frame_t * pg_tbl = get_frm_from_frm_num(tmp1->pd_base);
+			remove_pg_tbl_entry(pg_tbl, pt_offset);
+		}
+	}
+}
 
