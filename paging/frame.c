@@ -15,8 +15,6 @@ occupied_frm_list unfree_frm_list;
  */
 SYSCALL init_frm()
 {
-  /*kprintf("To be implemented!\n");
-  return OK;*/
   int i = 0;
   for(i = 0; i < NFRAMES; i++) 
   {
@@ -56,8 +54,6 @@ SYSCALL get_frm(int* avail)
  */
 SYSCALL free_frm(frame_t *frm)
 {
-
-
 	kprintf("request to free frame %d of type %d\n", frm->frm_num, frm->fr_type);
 	if(frm->fr_type == FR_PAGE){
 		write_bs((char *)(frm->frm_num * NBPG), frm->bs, frm->bs_page);

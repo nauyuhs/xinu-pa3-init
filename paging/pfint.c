@@ -23,8 +23,7 @@ SYSCALL pfint() {
 	add_mapping_to_proc_frm_list(frm, store, currpid);
 //	write_cr3(pdbr * NBPG);
 	restore(ps);
-	pd_t *ptr = (pd_t *) ((1029 * NBPG) );
-	pt_t *ptr1 = (pt_t *) ((1031 * NBPG));
+	kprintf("faulting on addr %x for proc %d and cr3 = %d\n", vaddr, currpid, read_cr3());
 //	kprintf("assigned frm num %d for addr %x\n", frm->frm_num, vaddr);
 	return OK;
 }

@@ -98,7 +98,7 @@ SYSCALL create(procaddr,ssize,priority,name,nargs,args)
 	*pushsp = pptr->pesp = (unsigned long)saddr;
 	frame_t *pg_dir = get_free_frame();
 	init_pg_dir(pg_dir, pid);
-	kprintf("main proc pd = %d\n", pg_dir->frm_num);
+	kprintf("%s proc pd = %d\n", name, pg_dir->frm_num);
 	pptr->pdbr = pg_dir->frm_num;
 	pptr->pd = pg_dir;
 	for(i = 0; i < NBS;i++){

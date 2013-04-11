@@ -13,7 +13,7 @@
 static unsigned long esp;
 */
 
-LOCAL	newpid();
+LOCAL	int newpid();
 /*------------------------------------------------------------------------
  *  create  -  create a process to start running a procedure
  *------------------------------------------------------------------------
@@ -28,15 +28,32 @@ SYSCALL vcreate(procaddr,ssize,hsize,priority,name,nargs,args)
 	long	args;			/* arguments (treated like an	*/
 					/* array in the code)		*/
 {
-	kprintf("To be implemented!\n");
-	return OK;
+
+
+	int avail, pid;
+	STATWORD 	ps;
+	disable(ps);
+	get_bsm(&avail);
+	if(avail == SYSERR){
+		restore(ps);
+		return SYSERR;
+	}
+	bs_tab[avail].as_heap = 1;
+
+	pid = create(procaddr, ssize, priority, name, nargs, args);
+	bsm_map(pid, 4096, avail, hsize);
+	struct pentry *pptr = &proctab[pid];
+	pptr->mem_list_t.mem = (char *)(4096*4096+1 );
+	pptr->mem_list_t.memlen = NUM_BS_PGS * NBPG; // in bytes
+	restore(ps);
+	return pid;
 }
 
 /*------------------------------------------------------------------------
  * newpid  --  obtain a new (free) process id
  *------------------------------------------------------------------------
  */
-LOCAL	newpid()
+LOCAL	int newpid()
 {
 	int	pid;			/* process id to return		*/
 	int	i;

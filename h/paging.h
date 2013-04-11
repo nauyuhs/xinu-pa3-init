@@ -162,6 +162,14 @@ typedef struct {
 //  unsigned long int fr_loadtime;	/* when the page is loaded 	*/
 //}fr_map_t;
 
+typedef struct _mem_list{
+	struct _mem_list *next;
+	char *mem;
+	int memlen;
+}mem_list;
+
+
+
 extern bs_map_t bs_map[NBS];
 //extern fr_map_t frm_map[NFRAMES];
 extern bs_t bs_tab[NBS];
@@ -218,6 +226,8 @@ void add_to_ocuupied_frm_list(frame_t *frm);
 void add_mapping_to_proc_frm_list(frame_t *frm, bsd_t id, int pid);
 
 void remove_from_ocuupied_frm_list(frame_t *frm);
+
+bs_t *get_free_bs();
 
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];

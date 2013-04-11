@@ -8,6 +8,7 @@
 #include <io.h>
 #include <q.h>
 #include <stdio.h>
+#include <paging.h>
 
 /*------------------------------------------------------------------------
  * kill  --  kill a process and remove it from the system
@@ -17,13 +18,17 @@ SYSCALL kill(int pid)
 {
 	STATWORD ps;    
 	struct	pentry	*pptr;		/* points to proc. table for pid*/
-	int	dev;
+	int	dev, i;
 	disable(ps);
 	if (isbadpid(pid) || (pptr= &proctab[pid])->pstate==PRFREE) {
 		restore(ps);
 		return(SYSERR);
 	}
 	free_pg_dir(pptr->pd);
+	for(i = 0; i < NBS;i++){
+		if(pptr->map[i].status == BSM_MAPPED)
+			bsm_unmap(pid, pptr->map[i].vpno, 1);
+	}
 	if (--numproc == 0)
 		xdone();
 

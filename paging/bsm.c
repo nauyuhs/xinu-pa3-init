@@ -25,11 +25,11 @@ SYSCALL init_bsm()
 		for(j = 0 ; j < NUM_BS_PGS; j++)
 			bs_tab[i].pg_to_frm_map[j] = -1; /* init with no mapping  */
 
-		bs_map[i].next = NULL;
-		bs_map[i].bs = BSM_UNMAPPED;
-		bs_map[i].pid = -1;
-		bs_map[i].vpno = -1;
-		bs_map[i].npages = 0;
+//		bs_map[i].next = NULL;
+//		bs_map[i].bs = BSM_UNMAPPED;
+//		bs_map[i].pid = -1;
+//		bs_map[i].vpno = -1;
+//		bs_map[i].npages = 0;
 	}
 	return OK;
 }
@@ -38,8 +38,24 @@ SYSCALL init_bsm()
  * get_bsm - get a free entry from bsm_tab 
  *-------------------------------------------------------------------------
  */
-SYSCALL get_bsm(int* avail)
-{
+SYSCALL get_bsm(int* avail) {
+	int i;
+	for (i = 0; i < NBS; i++) {
+		if (bs_tab[i].status == BSM_UNMAPPED) {
+			return *avail = i;
+		return OK;
+		}
+	}
+	return SYSERR;
+}
+
+bs_t *get_free_bs(){
+	int  i;
+	for (i = 0; i < NBS; i++)
+		if(bs_tab[i].status == BSM_UNMAPPED)
+			return &bs_tab[i];
+
+	return 0;
 }
 
 
@@ -53,7 +69,6 @@ SYSCALL free_bsm(int i)
 	bs_tab[i].status = BSM_UNMAPPED;
 	bs_tab[i].npages = 0;
 	kprintf("freeing the mapped frms for the bs\n");
-	free_frms_for_bs(i);
 	return OK;
 }
 
@@ -125,26 +140,18 @@ SYSCALL bsm_unmap(int pid, int vpno, int flag)
 	remove_pg_tbl_entries(pptr->pd, map->vpno , map->npages);
 	frame_t *frms= map->frm;
 	while(frms != NULL){
+		bs_tab[store].pg_to_frm_map[frms->bs_page] = -1;
 		free_frm(frms);
 		frms = frms ->bs_next;
 	}
 	remove_owner_mapping(map->bs, pid);
-
-
-//	for(i = 0; i < NBS; i++){
-//		bs_map_t *map = &(pptr->map[i]);
-//		if(map->status == BSM_MAPPED && map->vpno == vpno){
-//			remove_pg_tbl_entries(pptr->pd, map->vpno , map->npages);
-//			map->status = BSM_UNMAPPED;
-//			map->vpno  = 0;
-//			map->npages = 0;
-//
-//			remove_owner_mapping(map->bs, pid);
-////			if(bs_tab[map->bs].owners == NULL){
-////				free_bsm(map->bs);
-////			}
-//		}
-//	}
+	map->frm =  NULL;
+	map->bs = -1;
+	map->npages = 0;
+	map->status = BSM_UNMAPPED;
+	map->vpno = 0;
+	if(bs_tab[store].owners == NULL)
+		free_bsm(store);
 	return OK;
 }
 
