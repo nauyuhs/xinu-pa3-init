@@ -46,8 +46,8 @@ void remove_pg_tbl_entry(frame_t *frm, int idx){
 	pt_t *tmp = (pt_t *) (NBPG * frm->frm_num);
 	tmp += idx;
 	pt_t ptr;
-	ptr.pt_pres = 1;
-	ptr.pt_write = 1;
+	ptr.pt_pres = 0;
+	ptr.pt_write = 0;
 	ptr.pt_user = 0;
 	ptr.pt_pwt = 0;
 	ptr.pt_pcd = 0;
@@ -197,6 +197,7 @@ void remove_pg_tbl_entries(frame_t *pg_dir, int vpno, int num_pgs){
 		if(tmp1->pd_pres == 1){
 			frame_t * pg_tbl = get_frm_from_frm_num(tmp1->pd_base);
 			remove_pg_tbl_entry(pg_tbl, pt_offset);
+
 		}
 	}
 }

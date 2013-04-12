@@ -137,7 +137,7 @@ SYSCALL bsm_unmap(int pid, int vpno, int flag)
 	bsm_lookup(pid, vpno*NBPG, &store, &pageth);
 	kprintf("store = %d and pageth = %d\n", store, pageth);
 	bs_map_t *map = &(pptr->map[store]);
-	remove_pg_tbl_entries(pptr->pd, map->vpno , map->npages);
+//	remove_pg_tbl_entries(pptr->pd, map->vpno , map->npages);
 	frame_t *frms= map->frm;
 	while(frms != NULL){
 		bs_tab[store].pg_to_frm_map[frms->bs_page] = -1;
@@ -238,7 +238,8 @@ void add_mapping_to_proc_frm_list(frame_t *frm, bsd_t id, int pid){
 			tmp = tmp->bs_next;
 		tmp->bs_next = frm;
 	}
-	frm->fr_vpno = map->vpno;
+	frm->fr_vpno = map->vpno + frm->bs_page;
+	frm->fr_pid = pid;
 }
 
 

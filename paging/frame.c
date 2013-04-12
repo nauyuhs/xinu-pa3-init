@@ -56,7 +56,12 @@ SYSCALL free_frm(frame_t *frm)
 {
 	kprintf("request to free frame %d of type %d\n", frm->frm_num, frm->fr_type);
 	if(frm->fr_type == FR_PAGE){
+		// write to bs
 		write_bs((char *)(frm->frm_num * NBPG), frm->bs, frm->bs_page);
+		// remove entry from pg tbl
+		remove_pg_tbl_entries(proctab[frm->fr_pid].pd, frm->fr_vpno, 1);
+		kprintf("freeing frm %d for pid = %d and vpno = %d\n",frm->frm_num, frm->fr_pid, frm->fr_vpno);
+
 	}
 	remove_from_ocuupied_frm_list(frm);
 	add_to_free_frm_list(frm);

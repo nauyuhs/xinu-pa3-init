@@ -36,6 +36,7 @@ SYSCALL xmunmap(int virtpage )
   }
 
   bsm_unmap(currpid, virtpage, 1);
+  write_cr3(proctab[currpid].pdbr * NBPG);
   return OK;
 }
 

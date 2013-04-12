@@ -61,15 +61,32 @@ int main() {
 //		kprintf("0x%08x: %c\n", addr, *addr);
 		addr += 4096;       //increment by one page each time
 	}
+
+
 //
 	xmunmap(0x40000000 >> 12);
+	addr = (char*) 0x40000000; //1G
+	i = ((unsigned long) addr) >> 12;	// the ith page
+	get_bs(bs, 200);
+
+	if (xmmap(i, bs, 200) == SYSERR) {
+		kprintf("xmmap call failed\n");
+		//		return 0;
+	}
+	addr = (char*) 0x40000000; //1G
+	for (i = 0; i < 16; i++) {
+		kprintf("0x%08x: %c\n", addr, *addr);
+		addr += 4096;       //increment by one page each time
+	}
+
+
 
 //	char *kk = (char *)0x40000000;
 //	unsigned long adder  = (unsigned)kk + 0x1000;
 //	kprintf("vadder physical addr = %d\n", adder);
 
-	int p1 = vcreate(producer,  2000, 100, 30, "producer", 1, "dummyarg");
-	 resume(p1);
+//	int p1 = vcreate(producer,  2000, 100, 30, "producer", 1, "dummyarg");
+//	 resume(p1);
 //	addr = (char*) 0x901000;
 //	kprintf("val in bs 1 pg 0 %c\n", *addr);
 //	pt_t *ptt = (pt_t *)(1031* 4096);
