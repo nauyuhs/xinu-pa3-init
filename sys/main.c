@@ -30,6 +30,7 @@ void producer(char *name, char *dummy) {
  *------------------------------------------------------------------------
  */
 int main() {
+	srpolicy(AGING);
 	char *addr = (char*) 0x40000000; //1G
 //	char *addr = (char*) (2048*4096);
 	bsd_t bs = 1;

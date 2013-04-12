@@ -154,9 +154,23 @@ pd_t *get_pg_dir_entry(frame_t *pg_dir, int offset){
 }
 
 int has_page_been_accessed(int pid, int vpno){
-//	frame_t *pd = proctab[pid].pd;
-//	if(pd != NULL){
-//
-//	}
+	unsigned int pd_offset, pt_offset;
+	get_offsets_from_vaddr(get_vaddr_from_vpno(vpno), &pd_offset, &pt_offset);
+	pd_t *tmp1 = get_pg_dir_entry(proctab[pid].pd, pd_offset);
+	if(tmp1->pd_pres){
+		pt_t *pt = (pt_t *) (NBPG * tmp1->pd_base);
+		pt += pt_offset;
+		return pt->pt_acc;
+	}
+	return 0;
+}
+
+void  make_page_access_zero(int pid, int vpno){
+	unsigned int pd_offset, pt_offset;
+	get_offsets_from_vaddr(get_vaddr_from_vpno(vpno), &pd_offset, &pt_offset);
+	pd_t *tmp1 = get_pg_dir_entry(proctab[pid].pd, pd_offset);
+	pt_t *pt = (pt_t *) (NBPG * tmp1->pd_base);
+	pt += pt_offset;
+	pt->pt_acc = 0;
 }
 

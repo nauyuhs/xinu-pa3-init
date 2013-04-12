@@ -150,35 +150,47 @@ void remove_from_ocuupied_frm_list(frame_t *frm){
 }
 
 frame_t * get_evicted_pg(){
-	if(grpolicy() == FIFO)
-		return fifo_evict_policy();
-//	kprintf("replacement policy failed\n");
+	frame_t *frm;
+	if (grpolicy() == FIFO)
+		frm = fifo_evict_policy();
+	else
+		frm = aging_evict_policy();
+
+	free_frm(frm); // free the frame
+	remove_from_free_frm_list(frm); // remove from free list
+	add_to_ocuupied_frm_list(frm); // add to unfree list
+	return frm;
 }
 
 frame_t *fifo_evict_policy(){
-	kprintf("eviction policy called\n");
+	kprintf("fifo eviction policy called\n");
 	frame_t *curr = unfree_frm_list.head;
 	while(curr != NULL){
-		if(curr->fr_type == FR_PAGE){
-			free_frm(curr); // free the frame
-			remove_from_free_frm_list(curr); // remove from free list
-			add_to_ocuupied_frm_list(curr); // add to unfree list
-			return curr;
-		}
+		if(curr->fr_type == FR_PAGE) return curr;
 		curr = curr->fifo;
 	}
 	return 0;
 }
 
 frame_t *aging_evict_policy(){
-//	frame_t *frm_with_lowest_age = NULL;
-//	frame_t *curr = unfree_frm_list.head;
-//	while(curr != NULL){
-//		if(curr->fr_type == FR_PAGE){
-//			if(curr->pt)
-//		}
-//
-//	}
+	kprintf("aging eviction policy called\n");
+	frame_t *frm_with_lowest_age = NULL;
+	frame_t *curr = unfree_frm_list.head;
+	while(curr != NULL){
+		if(curr->fr_type == FR_PAGE){
+			curr->age = (curr->age >> 1);
+			if(has_page_been_accessed(currpid, curr->fr_vpno)){
+				curr->age |= AGE_FACTOR;
+				make_page_access_zero(currpid, curr->fr_vpno);
+			}
+			if(frm_with_lowest_age == NULL)
+				frm_with_lowest_age = curr;
+			else if(frm_with_lowest_age->age > curr->age)
+				frm_with_lowest_age = curr;
+		}
+		curr = curr->fifo;
+	}
+	return frm_with_lowest_age;
 }
 
 void remove_from_free_frm_list(frame_t *frm){

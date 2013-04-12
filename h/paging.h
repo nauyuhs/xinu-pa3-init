@@ -248,6 +248,8 @@ void write_pg_dir_entry(frame_t *frm, int idx, unsigned int pd_pres, unsigned in
 unsigned long get_vaddr_from_vpno(int vpno);
 void get_offsets_from_vaddr(unsigned long vaddr, unsigned int *pd_offset, unsigned int *pt_offset);
 pd_t *get_pg_dir_entry(frame_t *pg_dir, int offset);
+
+void  make_page_access_zero(int pid, int vpno);
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/
