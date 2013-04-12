@@ -150,7 +150,9 @@ void remove_from_ocuupied_frm_list(frame_t *frm){
 }
 
 frame_t * get_evicted_pg(){
-	return fifo_evict_policy();
+	if(grpolicy() == FIFO)
+		return fifo_evict_policy();
+//	kprintf("replacement policy failed\n");
 }
 
 frame_t *fifo_evict_policy(){
@@ -166,6 +168,17 @@ frame_t *fifo_evict_policy(){
 		curr = curr->fifo;
 	}
 	return 0;
+}
+
+frame_t *aging_evict_policy(){
+//	frame_t *frm_with_lowest_age = NULL;
+//	frame_t *curr = unfree_frm_list.head;
+//	while(curr != NULL){
+//		if(curr->fr_type == FR_PAGE){
+//			if(curr->pt)
+//		}
+//
+//	}
 }
 
 void remove_from_free_frm_list(frame_t *frm){

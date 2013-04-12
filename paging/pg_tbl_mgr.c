@@ -25,11 +25,19 @@ frame_t * create_pg_tbl(int pid){
 
 
 void make_pg_tbl_entry(frame_t *frm, int idx, int base){
-	pt_t *tmp = (pt_t *) (NBPG * frm->frm_num );
+	write_pg_tbl_entry(frm, idx, 1, 1, base);
+}
+
+void remove_pg_tbl_entry(frame_t *frm, int idx){
+	write_pg_tbl_entry(frm, idx, 0, 0, 0);
+}
+
+void write_pg_tbl_entry(frame_t *frm, int idx, unsigned int pt_pres, unsigned int pt_write, unsigned int base){
+	pt_t *tmp = (pt_t *) (NBPG * frm->frm_num);
 	tmp += idx;
 	pt_t ptr;
-	ptr.pt_pres = 1;
-	ptr.pt_write = 1;
+	ptr.pt_pres = pt_pres;
+	ptr.pt_write = pt_write;
 	ptr.pt_user = 0;
 	ptr.pt_pwt = 0;
 	ptr.pt_pcd = 0;
@@ -42,30 +50,19 @@ void make_pg_tbl_entry(frame_t *frm, int idx, int base){
 	*tmp = ptr;
 }
 
-void remove_pg_tbl_entry(frame_t *frm, int idx){
-	pt_t *tmp = (pt_t *) (NBPG * frm->frm_num);
-	tmp += idx;
-	pt_t ptr;
-	ptr.pt_pres = 0;
-	ptr.pt_write = 0;
-	ptr.pt_user = 0;
-	ptr.pt_pwt = 0;
-	ptr.pt_pcd = 0;
-	ptr.pt_acc = 0;
-	ptr.pt_dirty = 0;
-	ptr.pt_mbz = 0;
-	ptr.pt_global = 0;
-	ptr.pt_avail = 0;
-	ptr.pt_base = 0;
-	*tmp = ptr;
+void make_pg_dir_entry(frame_t *frm, int idx, int base){
+	write_pg_dir_entry(frm, idx,1,1,base);
 }
 
-void make_pg_dir_entry(frame_t *frm, int idx, int base){
-	pd_t *tmp1 = (pd_t *) (NBPG * frm->frm_num);
-	tmp1 += idx;
+void remove_pg_dir_entry(frame_t *frm, int idx){
+	write_pg_dir_entry(frm, idx,0,0,0);
+}
+
+void write_pg_dir_entry(frame_t *frm, int idx, unsigned int pd_pres, unsigned int pd_write, unsigned int base){
+	pd_t *tmp1 = get_pg_dir_entry(frm, idx);
 	pd_t ptr1;
-	ptr1.pd_pres = 1;
-	ptr1.pd_write = 1;
+	ptr1.pd_pres = pd_pres;
+	ptr1.pd_write = pd_write;
 	ptr1.pd_user = 0;
 	ptr1.pd_pwt = 0;
 	ptr1.pd_pcd = 0;
@@ -75,24 +72,6 @@ void make_pg_dir_entry(frame_t *frm, int idx, int base){
 	ptr1.pd_global = 0;
 	ptr1.pd_avail = 0;
 	ptr1.pd_base = base;
-	*tmp1 = ptr1;
-}
-
-void remove_pg_dir_entry(frame_t *frm, int idx){
-	pd_t *tmp1 = (pd_t *) (NBPG * frm->frm_num);
-	tmp1 += idx;
-	pd_t ptr1;
-	ptr1.pd_pres = 0;
-	ptr1.pd_write = 0;
-	ptr1.pd_user = 0;
-	ptr1.pd_pwt = 0;
-	ptr1.pd_pcd = 0;
-	ptr1.pd_acc = 0;
-	ptr1.pd_mbz = 0;
-	ptr1.pd_fmb = 0;
-	ptr1.pd_global = 0;
-	ptr1.pd_avail = 0;
-	ptr1.pd_base = 0;
 	*tmp1 = ptr1;
 }
 
@@ -111,9 +90,8 @@ SYSCALL init_pg_dir(frame_t *frm, int pid) {
 
 SYSCALL free_pg_dir(frame_t *pd){
 	int i;
-	pd_t *ptr1 = (pd_t *)(NBPG * pd->frm_num);
 	// dont free global pages
-	ptr1 += NUM_GLB_PG_TBLS;
+	pd_t *ptr1 = get_pg_dir_entry(pd, NUM_GLB_PG_TBLS);
 	// free the page tables
 	for(i = 0; i < NUM_PG_TBL_ENTRIES-NUM_GLB_PG_TBLS; i++){
 		if(ptr1->pd_pres == 1 ){
@@ -128,51 +106,12 @@ SYSCALL free_pg_dir(frame_t *pd){
 	return OK;
 }
 
-void uninit_pg_tbl(int frm_num){
-	int i;
-	pt_t *ptr = (pt_t *) (NBPG * frm_num);
-	for (i = 0; i < NUM_PG_TBL_ENTRIES; i++) {
-		ptr->pt_pres = 0;
-		ptr->pt_write = 0;
-		ptr->pt_user = 0;
-		ptr->pt_pwt = 0;
-		ptr->pt_pcd = 0;
-		ptr->pt_acc = 0;
-		ptr->pt_dirty = 0;
-		ptr->pt_mbz = 0;
-		ptr->pt_global = 0;
-		ptr->pt_avail = 0;
-		ptr->pt_base = 0;
-		ptr++;
-	}
-}
-
-void uninit_pg_dir(int frm_num){
-	int  i;
-	pd_t *ptr1 = (pd_t *) (NBPG * frm_num);
-	for (i = 0; i < NUM_PG_TBL_ENTRIES; i++) {
-			ptr1->pd_pres = 0 ;
-			ptr1->pd_write = 0;
-			ptr1->pd_user = 0;
-			ptr1->pd_pwt = 0;
-			ptr1->pd_pcd = 0;
-			ptr1->pd_acc = 0;
-			ptr1->pd_mbz = 0;
-			ptr1->pd_fmb = 0;
-			ptr1->pd_global = 0;
-			ptr1->pd_avail = 0;
-			ptr1->pd_base = 0;
-			ptr1++;
-		}
-}
-
-unsigned long add_pg_dir_entry_for_pg_fault(int pid, unsigned int pg_dir_offset,
-		unsigned int pg_tbl_offset, frame_t * frm ){
-	unsigned long pg_tbl_frm;
+unsigned long add_entry_for_pg_fault(int pid, unsigned long vaddr, frame_t * frm ){
 	int avail = 0, i;
+	unsigned int pg_dir_offset, pg_tbl_offset;
 	struct pentry *pptr = &proctab[pid];
-	frame_t *pg_dir = pptr->pd;
-	pd_t *tmp1 = (pd_t *) ((NBPG * pg_dir->frm_num) + pg_dir_offset * sizeof(pd_t));
+	get_offsets_from_vaddr(vaddr, &pg_dir_offset, &pg_tbl_offset);
+	pd_t *tmp1 = get_pg_dir_entry(pptr->pd, pg_dir_offset);
 	if (tmp1->pd_pres == 1) {
 		frame_t *pg_tbl = get_frm_from_frm_num(tmp1->pd_base);
 		make_pg_tbl_entry(pg_tbl, pg_tbl_offset, frm->frm_num);
@@ -180,26 +119,44 @@ unsigned long add_pg_dir_entry_for_pg_fault(int pid, unsigned int pg_dir_offset,
 	else{
 		// create pd entry as it is absent
 		frame_t * pg_tbl = create_pg_tbl(currpid);
-		make_pg_dir_entry(pg_dir, pg_dir_offset, pg_tbl->frm_num);
+		make_pg_dir_entry(pptr->pd, pg_dir_offset, pg_tbl->frm_num);
 		make_pg_tbl_entry(pg_tbl, pg_tbl_offset, frm->frm_num);
-		pg_tbl_frm = pg_tbl->frm_num ;
 	}
     return pptr->pdbr;
 }
 
 void remove_pg_tbl_entries(frame_t *pg_dir, int vpno, int num_pgs){
 	int  i;
+	unsigned int pd_offset, pt_offset;
 	for(i = vpno; i < vpno + num_pgs; i++){
-		unsigned long vaddr = i * NBPG;
-		unsigned int pd_offset = (vaddr & 0xFFC00000) >> 22;
-		unsigned int pt_offset = (vaddr & 0x3FF000) >> 12;
-		pd_t *tmp1 = (pd_t *) ((NBPG * pg_dir->frm_num) + pd_offset * sizeof(pd_t));
+		get_offsets_from_vaddr(get_vaddr_from_vpno(vpno), &pd_offset, &pt_offset);
+		pd_t *tmp1 = get_pg_dir_entry(pg_dir, pd_offset);
+
 		if(tmp1->pd_pres == 1){
 			frame_t * pg_tbl = get_frm_from_frm_num(tmp1->pd_base);
 			remove_pg_tbl_entry(pg_tbl, pt_offset);
-
 		}
 	}
 	write_cr3(proctab[currpid].pdbr * NBPG);
+}
+
+unsigned long get_vaddr_from_vpno(int vpno){
+	return vpno * NBPG;
+}
+
+void get_offsets_from_vaddr(unsigned long vaddr, unsigned int *pd_offset, unsigned int *pt_offset){
+	*pd_offset = (vaddr & 0xFFC00000) >> 22;
+	*pt_offset = (vaddr & 0x3FF000) >> 12;
+}
+
+pd_t *get_pg_dir_entry(frame_t *pg_dir, int offset){
+	return (pd_t *) ((NBPG * pg_dir->frm_num) + offset * sizeof(pd_t));
+}
+
+int has_page_been_accessed(int pid, int vpno){
+//	frame_t *pd = proctab[pid].pd;
+//	if(pd != NULL){
+//
+//	}
 }
 

@@ -43,6 +43,8 @@ typedef unsigned int	 bsd_t;
 
 #define NUM_BS_PGS 256
 
+#define AGE_FACTOR 0x80
+
 typedef struct {
 
   unsigned int pd_pres	: 1;		/* page table present?		*/
@@ -194,7 +196,7 @@ int find_page(int start_vpage, int npages, int vaddr);
 void uninit_pg_tbl(int frm_num);
 void uninit_pg_dir(int frm_num);
 frame_t *bs_get_frame(bsd_t id, int pageth);
-unsigned long add_pg_dir_entry_for_pg_fault(int pid, unsigned int pg_dir_offset, unsigned int pg_tbl_offset, frame_t * frm );
+unsigned long add_entry_for_pg_fault(int pid, unsigned long vaddr, frame_t * frm );
 SYSCALL remove_owner_mapping(bsd_t id, int pid);
 void free_frms_for_bs(bsd_t id);
 void free_bs_frame(int frm_num);
@@ -236,6 +238,16 @@ void remove_frm_from_proc_list(frame_t *frm);
 
 void remove_from_free_frm_list(frame_t *frm);
 
+frame_t *aging_evict_policy();
+
+int has_page_been_accessed(int pid, int vpno);
+
+
+void write_pg_tbl_entry(frame_t *frm, int idx, unsigned int pt_pres, unsigned int pt_write, unsigned int base);
+void write_pg_dir_entry(frame_t *frm, int idx, unsigned int pd_pres, unsigned int pd_write, unsigned int base);
+unsigned long get_vaddr_from_vpno(int vpno);
+void get_offsets_from_vaddr(unsigned long vaddr, unsigned int *pd_offset, unsigned int *pt_offset);
+pd_t *get_pg_dir_entry(frame_t *pg_dir, int offset);
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/
