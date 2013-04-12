@@ -4,6 +4,8 @@
 #include <proc.h>
 #include <paging.h>
 
+#define NUM_PAGES_TEST 20
+
 //fr_map_t frm_map[NFRAMES];
 frame_t frm_tab[NFRAMES];
 frame_t *free_frm_list;
@@ -16,7 +18,7 @@ occupied_frm_list unfree_frm_list;
 SYSCALL init_frm()
 {
   int i = 0;
-  for(i = 0; i < NFRAMES; i++) 
+  for(i = 0; i < NUM_PAGES_TEST; i++)
   {
 		frm_tab[i].status = FRM_FREE;
 		frm_tab[i].refcnt = 0;
@@ -54,14 +56,16 @@ SYSCALL get_frm(int* avail)
  */
 SYSCALL free_frm(frame_t *frm)
 {
-	kprintf("request to free frame %d of type %d\n", frm->frm_num, frm->fr_type);
+//	kprintf("request to free frame %d of type %d\n", frm->frm_num, frm->fr_type);
 	if(frm->fr_type == FR_PAGE){
+		// remove entry from bs
+		bs_tab[frm->bs].pg_to_frm_map[frm->bs_page] = -1;
 		// write to bs
 		write_bs((char *)(frm->frm_num * NBPG), frm->bs, frm->bs_page);
 		// remove entry from pg tbl
 		remove_pg_tbl_entries(proctab[frm->fr_pid].pd, frm->fr_vpno, 1);
-		kprintf("freeing frm %d for pid = %d and vpno = %d\n",frm->frm_num, frm->fr_pid, frm->fr_vpno);
-
+		// remove from proc list
+		remove_frm_from_proc_list(frm);
 	}
 	remove_from_ocuupied_frm_list(frm);
 	add_to_free_frm_list(frm);
@@ -72,7 +76,12 @@ SYSCALL free_frm(frame_t *frm)
 }
 
 frame_t *get_free_frame(){
-	return get_from_free_frm_list();
+	frame_t * frm = get_from_free_frm_list();
+	if(frm == NULL){
+		frm = get_evicted_pg();
+	}
+	return frm;
+
 }
 
 frame_t *get_frm_from_frm_num(int frm_num){
@@ -108,7 +117,6 @@ frame_t *get_from_free_frm_list(){
 	frame_t * tmp = free_frm_list;
 	free_frm_list = tmp->fifo;
 	add_to_ocuupied_frm_list(tmp);
-	kprintf("returning frm %d from free list \n", tmp->frm_num);
 	return tmp;
 }
 
@@ -126,7 +134,6 @@ void remove_from_ocuupied_frm_list(frame_t *frm){
 	frame_t *curr = unfree_frm_list.head;
 	while(curr != NULL ){
 		if(curr == frm){
-			kprintf("rmoving frm occupied list frm = %d\n", curr->frm_num);
 			prev->fifo = curr->fifo;
 			if(curr == unfree_frm_list.head){
 				unfree_frm_list.head = curr->fifo;
@@ -142,5 +149,43 @@ void remove_from_ocuupied_frm_list(frame_t *frm){
 	}
 }
 
+frame_t * get_evicted_pg(){
+	return fifo_evict_policy();
+}
+
+frame_t *fifo_evict_policy(){
+	kprintf("eviction policy called\n");
+	frame_t *curr = unfree_frm_list.head;
+	while(curr != NULL){
+		if(curr->fr_type == FR_PAGE){
+			free_frm(curr); // free the frame
+			remove_from_free_frm_list(curr); // remove from free list
+			add_to_ocuupied_frm_list(curr); // add to unfree list
+			return curr;
+		}
+		curr = curr->fifo;
+	}
+	return 0;
+}
+
+void remove_from_free_frm_list(frame_t *frm){
+	if (free_frm_list == NULL) {
+		kprintf("no frames present to free\n");
+		return;
+	}
+	frame_t *curr = free_frm_list;
+	frame_t *prev = free_frm_list;
+	while(curr != NULL){
+		if(curr == frm){
+			if(free_frm_list == curr)
+				free_frm_list = curr->fifo;
+			prev->fifo = curr->fifo;
+			curr->fifo = NULL;
+			return;
+		}
+		prev = curr;
+		curr = curr->fifo;
+	}
+}
 
 

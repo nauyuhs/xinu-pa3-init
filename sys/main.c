@@ -58,27 +58,51 @@ int main() {
 
 	addr = (char*) 0x40000000; //1G
 	for (i = 0; i < 16; i++) {
-//		kprintf("0x%08x: %c\n", addr, *addr);
+		kprintf("0x%08x: %c\n", addr, *addr);
 		addr += 4096;       //increment by one page each time
 	}
 
 
 //
+	char *addr2 = (char*) 0x80000000; //1G
+	bsd_t bs2 = 2;
+	int i2 = ((unsigned long) addr2) >> 12;	// the ith page
+	get_bs(bs2, 200);
+	if (xmmap(i2, bs2, 200) == SYSERR) {
+			kprintf("xmmap call failed\n");
+	//		return 0;
+	}
+	for (i2 = 0; i2 < 16; i2++) {
+			*addr2 = 'A' + i;
+			addr2 += NBPG;	//increment by one page each time
+		}
+
+		addr2 = (char*) 0x80000000; //1G
+		for (i2 = 0; i2 < 16; i2++) {
+			kprintf("0x%08x: %c\n", addr2, *addr2);
+			addr2 += 4096;       //increment by one page each time
+		}
+
+
 	xmunmap(0x40000000 >> 12);
-	addr = (char*) 0x40000000; //1G
-	i = ((unsigned long) addr) >> 12;	// the ith page
-	get_bs(bs, 200);
+	xmunmap(0x80000000 >> 12);
 
-	if (xmmap(i, bs, 200) == SYSERR) {
-		kprintf("xmmap call failed\n");
-		//		return 0;
-	}
-	addr = (char*) 0x40000000; //1G
-	for (i = 0; i < 16; i++) {
-		kprintf("0x%08x: %c\n", addr, *addr);
-		addr += 4096;       //increment by one page each time
-	}
+//	addr = (char*) 0x40000000; //1G
+//	i = ((unsigned long) addr) >> 12;	// the ith page
+//	get_bs(bs, 200);
 
+//	if (xmmap(i, bs, 200) == SYSERR) {
+//		kprintf("xmmap call failed\n");
+//		//		return 0;
+//	}
+//	addr = (char*) 0x40000000; //1G
+//	for (i = 0; i < 16; i++) {
+//		kprintf("0x%08x: %c\n", addr, *addr);
+//		addr += 4096;       //increment by one page each time
+//	}
+
+
+//	char *addr2 = (char*) 0x40000000; //1G
 
 
 //	char *kk = (char *)0x40000000;

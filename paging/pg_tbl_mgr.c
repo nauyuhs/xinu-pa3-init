@@ -200,5 +200,6 @@ void remove_pg_tbl_entries(frame_t *pg_dir, int vpno, int num_pgs){
 
 		}
 	}
+	write_cr3(proctab[currpid].pdbr * NBPG);
 }
 

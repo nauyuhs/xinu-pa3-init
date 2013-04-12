@@ -229,6 +229,13 @@ void remove_from_ocuupied_frm_list(frame_t *frm);
 
 bs_t *get_free_bs();
 
+frame_t *get_evicted_pg();
+frame_t *fifo_evict_policy();
+
+void remove_frm_from_proc_list(frame_t *frm);
+
+void remove_from_free_frm_list(frame_t *frm);
+
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/

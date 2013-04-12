@@ -24,12 +24,6 @@ SYSCALL init_bsm()
 		bs_tab[i].frm = NULL;
 		for(j = 0 ; j < NUM_BS_PGS; j++)
 			bs_tab[i].pg_to_frm_map[j] = -1; /* init with no mapping  */
-
-//		bs_map[i].next = NULL;
-//		bs_map[i].bs = BSM_UNMAPPED;
-//		bs_map[i].pid = -1;
-//		bs_map[i].vpno = -1;
-//		bs_map[i].npages = 0;
 	}
 	return OK;
 }
@@ -68,6 +62,7 @@ SYSCALL free_bsm(int i)
 	kprintf("free request for bs = %d\n", i);
 	bs_tab[i].status = BSM_UNMAPPED;
 	bs_tab[i].npages = 0;
+	bs_tab[i].as_heap = 0;
 	kprintf("freeing the mapped frms for the bs\n");
 	return OK;
 }
@@ -82,7 +77,8 @@ SYSCALL bsm_lookup(int pid, long vaddr, int* store, int* pageth)
 	struct pentry *pptr = &proctab[pid];
 	for(i = 0 ; i< NBS; i++){
 		bs_map_t *map = &(pptr->map[i]);
-		if(map->status == BSM_MAPPED && ((map->vpno + map->npages) * NBPG) > vaddr ){
+		if(map->status == BSM_MAPPED && (((map->vpno + map->npages) * NBPG) >= vaddr) &&
+				(map->vpno  * NBPG <= vaddr)){
 			*store = i;
 			*pageth = find_page(map->vpno, map->npages, vaddr);
 			return OK;
@@ -137,12 +133,11 @@ SYSCALL bsm_unmap(int pid, int vpno, int flag)
 	bsm_lookup(pid, vpno*NBPG, &store, &pageth);
 	kprintf("store = %d and pageth = %d\n", store, pageth);
 	bs_map_t *map = &(pptr->map[store]);
-//	remove_pg_tbl_entries(pptr->pd, map->vpno , map->npages);
 	frame_t *frms= map->frm;
 	while(frms != NULL){
-		bs_tab[store].pg_to_frm_map[frms->bs_page] = -1;
-		free_frm(frms);
-		frms = frms ->bs_next;
+		frame_t *temp = frms;
+		frms = frms->bs_next;
+		free_frm(temp);
 	}
 	remove_owner_mapping(map->bs, pid);
 	map->frm =  NULL;
@@ -154,6 +149,25 @@ SYSCALL bsm_unmap(int pid, int vpno, int flag)
 		free_bsm(store);
 	return OK;
 }
+
+void remove_frm_from_proc_list(frame_t *frm){
+	struct pentry *pptr = &proctab[frm->fr_pid];
+	bs_map_t *map = &(pptr->map[frm->bs]);
+	frame_t *curr= map->frm;
+	frame_t *prev= map->frm;
+	while(curr != NULL){
+		if(curr == frm){
+			if(curr == map->frm)
+				map->frm = curr->bs_next;
+			prev->bs_next = curr->bs_next;
+			curr->bs_next = NULL;
+			break;
+		}
+		prev = curr;
+		curr = curr->bs_next;
+	}
+}
+
 
 
 int find_page(int start_vpage, int npages, int vaddr){
@@ -181,7 +195,6 @@ frame_t *bs_get_frame(bsd_t id, int pageth){
 }
 
 SYSCALL remove_owner_mapping(bsd_t source, int pid){
-	kprintf("source = %d and pid = %d\n", source, pid);
 	bs_t *tab = &bs_tab[source];
 	bs_map_t *prev = NULL;
 	bs_map_t *temp = tab->owners;
