@@ -11,6 +11,7 @@
  */
 SYSCALL pfint() {
 
+	kprintf("#PF in %s, cr2:%x:ec2\n", proctab[currpid].pname, read_cr2());
 	STATWORD ps;
 	disable(ps);
 	int store, pageth;
@@ -21,9 +22,6 @@ SYSCALL pfint() {
 	add_mapping_to_proc_frm_list(frm, store, currpid);
 	write_cr3(pdbr * NBPG);
 	restore(ps);
-	kprintf("faulting on addr %x for proc %d and cr3 = %d\ and page  = %d and vpno = %d\n",
-			vaddr, currpid, read_cr3(), pageth, frm->fr_vpno );
-//	kprintf("assigned frm num %d for addr %x\n", frm->frm_num, vaddr);
 	return OK;
 }
 

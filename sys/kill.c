@@ -24,6 +24,7 @@ SYSCALL kill(int pid)
 		restore(ps);
 		return(SYSERR);
 	}
+	kprintf("purge all the mapping for pid %d \nfree page tables for %d\n", pid, pid);
 	free_pg_dir(pptr->pd);
 	for(i = 0; i < NBS;i++){
 		if(pptr->map[i].status == BSM_MAPPED)

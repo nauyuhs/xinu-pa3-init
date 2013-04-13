@@ -59,11 +59,9 @@ bs_t *get_free_bs(){
  */
 SYSCALL free_bsm(int i)
 {
-	kprintf("free request for bs = %d\n", i);
 	bs_tab[i].status = BSM_UNMAPPED;
 	bs_tab[i].npages = 0;
 	bs_tab[i].as_heap = 0;
-	kprintf("freeing the mapped frms for the bs\n");
 	return OK;
 }
 
@@ -94,7 +92,6 @@ SYSCALL bsm_lookup(int pid, long vaddr, int* store, int* pageth)
  */
 SYSCALL bsm_map(int pid, int vpno, int source, int npages) {
 
-	kprintf("mapping called for bs = %d\n", source);
 	if (bs_tab[source].status == BSM_UNMAPPED) {
 		bs_tab[source].status = BSM_MAPPED;
 		bs_tab[source].npages = npages;
@@ -127,11 +124,9 @@ SYSCALL bsm_map(int pid, int vpno, int source, int npages) {
  */
 SYSCALL bsm_unmap(int pid, int vpno, int flag)
 {
-	kprintf("calling unmap for pid = %d and vpno = %d\n", pid, vpno);
 	int i, store, pageth;
 	struct pentry *pptr = &proctab[pid];
 	bsm_lookup(pid, vpno*NBPG, &store, &pageth);
-	kprintf("store = %d and pageth = %d\n", store, pageth);
 	bs_map_t *map = &(pptr->map[store]);
 	frame_t *frms= map->frm;
 	while(frms != NULL){
@@ -147,6 +142,7 @@ SYSCALL bsm_unmap(int pid, int vpno, int flag)
 	map->vpno = 0;
 	if(bs_tab[store].owners == NULL)
 		free_bsm(store);
+	kprintf("delete pid %d's mapping of bs%d@%d\n", pid, store, vpno);
 	return OK;
 }
 
@@ -191,6 +187,7 @@ frame_t *bs_get_frame(bsd_t id, int pageth){
 		bs_frm->fr_type = FR_PAGE;
  		// now bring the page into memory
 		read_bs((char *)(bs_frm->frm_num * NBPG), id, pageth );
+		kprintf("map bs%d/page: %d to frame %d\n", id, pageth, bs_frm->frm_num);
 		return bs_frm;
 }
 
@@ -208,7 +205,6 @@ SYSCALL remove_owner_mapping(bsd_t source, int pid){
 				temp->next = NULL;
 			}
 			freemem((struct mblock *)temp, sizeof(bs_map_t));
-			kprintf("owner removed\n");
 			return OK;
 		}
 		prev = temp;

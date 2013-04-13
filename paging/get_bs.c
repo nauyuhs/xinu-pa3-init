@@ -15,7 +15,8 @@ int get_bs(bsd_t bs_id, unsigned int npages) {
 		restore(ps);
 		return(SYSERR);
 	}
-
+	kprintf("Calling get_bs for bs: %d npages:%d\n", bs_id, npages);
+	kprintf("%d pages of %d bs allocated\n", npages, bs_id);
 	enable(ps);
     return npages;
 

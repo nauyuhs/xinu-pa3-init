@@ -125,6 +125,7 @@ nulluser()				/* babysit CPU when no one is home */
 
 	userpid = create(main, INITSTK, INITPRIO, INITNAME, INITARGS);
 
+
 	enable_paging((proctab[NULLPROC].pd->frm_num) * NBPG);
 	enable();
 	resume(userpid);
@@ -235,6 +236,7 @@ sysinit()
 	init_frm();
 
 	int start = NFRAMES;
+	kprintf("initialize page tables for null process\n");
 	init_glb_pgs(glb_pg_tbl_frm_mapping);
 	// init pg dir for proc 0
 	frame_t *pg_dir = get_free_frame();

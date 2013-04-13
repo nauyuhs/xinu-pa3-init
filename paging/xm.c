@@ -18,6 +18,8 @@ SYSCALL xmmap(int virtpage, bsd_t source, int npages)
 	kprintf("xmmap call error: parameter error! \n");
 	return SYSERR;
   }
+  kprintf("map bs%d into process %d:%x[%d]\n", source, currpid, virtpage, virtpage);
+
   return bsm_map(currpid, virtpage, source, npages);
 }
 
@@ -34,8 +36,10 @@ SYSCALL xmunmap(int virtpage )
 	kprintf("xmummap call error: virtpage (%d) invalid! \n", virtpage);
 	return SYSERR;
   }
+  kprintf("unmap process %d:%x[%d]", currpid, virtpage, virtpage);
 
   bsm_unmap(currpid, virtpage, 1);
+
   write_cr3(proctab[currpid].pdbr * NBPG);
   return OK;
 }

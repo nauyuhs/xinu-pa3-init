@@ -26,13 +26,16 @@ frame_t * create_pg_tbl(int pid){
 
 void make_pg_tbl_entry(frame_t *frm, int idx, int base){
 	write_pg_tbl_entry(frm, idx, 1, 1, base);
+	frm->refcnt = frm->refcnt + 1;
 }
 
 void remove_pg_tbl_entry(frame_t *frm, int idx){
 	write_pg_tbl_entry(frm, idx, 0, 0, 0);
+	frm->refcnt = frm->refcnt - 1;
 }
 
-void write_pg_tbl_entry(frame_t *frm, int idx, unsigned int pt_pres, unsigned int pt_write, unsigned int base){
+void write_pg_tbl_entry(frame_t *frm, int idx, unsigned int pt_pres,
+		unsigned int pt_write, unsigned int base){
 	pt_t *tmp = (pt_t *) (NBPG * frm->frm_num);
 	tmp += idx;
 	pt_t ptr;
@@ -52,13 +55,16 @@ void write_pg_tbl_entry(frame_t *frm, int idx, unsigned int pt_pres, unsigned in
 
 void make_pg_dir_entry(frame_t *frm, int idx, int base){
 	write_pg_dir_entry(frm, idx,1,1,base);
+	frm->refcnt = frm->refcnt + 1;
 }
 
 void remove_pg_dir_entry(frame_t *frm, int idx){
 	write_pg_dir_entry(frm, idx,0,0,0);
+	frm->refcnt = frm->refcnt - 1;
 }
 
-void write_pg_dir_entry(frame_t *frm, int idx, unsigned int pd_pres, unsigned int pd_write, unsigned int base){
+void write_pg_dir_entry(frame_t *frm, int idx, unsigned int pd_pres,
+		unsigned int pd_write, unsigned int base){
 	pd_t *tmp1 = get_pg_dir_entry(frm, idx);
 	pd_t ptr1;
 	ptr1.pd_pres = pd_pres;
@@ -83,6 +89,7 @@ SYSCALL init_pg_dir(frame_t *frm, int pid) {
 	frm->status = FRM_PGD;
 
 	for (i = 0; i < NUM_GLB_PG_TBLS; i++) {
+		kprintf("pd[%d].base = %d\n", i,  glb_pg_tbl_frm_mapping[i]);
 		make_pg_dir_entry(frm, i, glb_pg_tbl_frm_mapping[i]);
 	}
 	return OK;
@@ -135,6 +142,10 @@ void remove_pg_tbl_entries(frame_t *pg_dir, int vpno, int num_pgs){
 		if(tmp1->pd_pres == 1){
 			frame_t * pg_tbl = get_frm_from_frm_num(tmp1->pd_base);
 			remove_pg_tbl_entry(pg_tbl, pt_offset);
+			if(pg_tbl->refcnt == 0){ // if the pg tbl has no entries
+				remove_pg_dir_entry(pg_dir, pd_offset);
+				free_frm(pg_tbl);
+			}
 		}
 	}
 	write_cr3(proctab[currpid].pdbr * NBPG);
