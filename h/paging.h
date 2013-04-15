@@ -46,6 +46,8 @@ typedef unsigned int	 bsd_t;
 
 #define AGE_FACTOR 0x80
 
+#define REMOVE_ALL -3
+
 typedef struct {
 
   unsigned int pd_pres	: 1;		/* page table present?		*/
@@ -84,7 +86,11 @@ typedef struct{
   unsigned int pd_offset ;		/* page directory offset	*/
 } virt_addr_t;
 
-
+typedef struct _proc_frm_t{
+	struct _proc_frm_t *next ;
+	int pid;
+	unsigned int vpno;
+}proc_frm_t;
 
 typedef struct _frame_t {
 	int status; /* FRM_FREE, FRM_PGD, FRM_PGT, FRM_BS*/
@@ -110,6 +116,7 @@ typedef struct _frame_t {
 	int fr_dirty;
 	void *cookie;				/* private data structure	*/
 	unsigned long int fr_loadtime;	/* when the page is loaded 	*/
+	proc_frm_t *procs;
 } frame_t; //kernel
 
 extern frame_t *free_frm_list;
@@ -151,6 +158,9 @@ typedef struct {
 	bs_map_t *owners; /* where it is mapped*/
 	frame_t *frm; /* the list of frames that maps this bs*/
 } bs_t; //kernel
+
+
+
 
 
 
@@ -251,6 +261,19 @@ void get_offsets_from_vaddr(unsigned long vaddr, unsigned int *pd_offset, unsign
 pd_t *get_pg_dir_entry(frame_t *pg_dir, int offset);
 
 void  make_page_access_zero(int pid, int vpno);
+
+void add_proc_for_bs_frame(frame_t *frm, unsigned int vpno, int pid);
+
+proc_frm_t *remove_proc_mapping_from_bs_frame(frame_t *frm, int pid);
+
+SYSCALL free_shared_frm(frame_t *frm, int  pid);
+
+void unmap_pg_tbl_entry(frame_t *frm,  int pid);
+
+int is_bs_frm_unmapped(frame_t *frm);
+
+proc_frm_t *remove_first__from_proc_mapping_from_bs_frame(frame_t *frm);
+proc_frm_t *get_first__from_proc_mapping_from_bs_frame(frame_t *frm);
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/

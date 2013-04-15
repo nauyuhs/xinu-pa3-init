@@ -120,7 +120,8 @@ SYSCALL bsm_unmap(int pid, int vpno, int flag)
 	while(frms != NULL){
 		frame_t *temp = frms;
 		frms = frms->bs_next;
-		free_frm(temp);
+//		free_frm(temp);
+		free_shared_frm(temp, pid);
 	}
 	remove_owner_mapping(map->bs, pid);
 	map->frm =  NULL;
@@ -160,18 +161,23 @@ int find_page(int start_vpage, int npages, int vaddr){
 	return (int)0;
 }
 
-frame_t *bs_get_frame(bsd_t id, int pageth){
-		frame_t *bs_frm = get_free_frame();
+frame_t *bs_get_frame(bsd_t id, int pageth) {
+	frame_t *bs_frm;
+	if (bs_tab[id].pg_to_frm_map[pageth] != -1) {
+		bs_frm = get_frm_from_frm_num(bs_tab[id].pg_to_frm_map[pageth]);
+	} else {
+		bs_frm = get_free_frame();
 		bs_tab[id].pg_to_frm_map[pageth] = bs_frm->frm_num;
 		// put mapping in frame
 		bs_frm->bs = id;
 		bs_frm->bs_page = pageth;
 		bs_frm->status = FRM_BS;
 		bs_frm->fr_type = FR_PAGE;
- 		// now bring the page into memory
-		read_bs((char *)(bs_frm->frm_num * NBPG), id, pageth );
-		kprintf("map bs%d/page: %d to frame %d\n", id, pageth, bs_frm->frm_num);
-		return bs_frm;
+		// now bring the page into memory
+		read_bs((char *) (bs_frm->frm_num * NBPG), id, pageth);
+	}
+	kprintf("map bs%d/page: %d to frame %d\n", id, pageth, bs_frm->frm_num);
+	return bs_frm;
 }
 
 SYSCALL remove_owner_mapping(bsd_t source, int pid){
@@ -230,4 +236,5 @@ void add_mapping_to_proc_frm_list(frame_t *frm, bsd_t id, int pid){
 	}
 	frm->fr_vpno = map->vpno + frm->bs_page;
 	frm->fr_pid = pid;
+	add_proc_for_bs_frame(frm, map->vpno + frm->bs_page, pid);
 }

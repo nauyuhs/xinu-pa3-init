@@ -28,6 +28,7 @@ SYSCALL init_frm()
 		frm_tab[i].fifo = NULL;
 		frm_tab[i].age = 0;
 		frm_tab[i].frm_num = FRAME0 + i;
+		frm_tab[i].procs = NULL;
 		add_to_free_frm_list(&frm_tab[i]);
   }
   unfree_frm_list.head = unfree_frm_list.tail = NULL;
@@ -42,29 +43,61 @@ SYSCALL init_frm()
 SYSCALL free_frm(frame_t *frm)
 {
 //	kprintf("request to free frame %d of type %d\n", frm->frm_num, frm->fr_type);
-	if(frm->fr_type == FR_PAGE){
+//	if(frm->fr_type == FR_PAGE){
+//		kprintf("remove frame %d from bs %d\n", frm->frm_num, frm->bs);
+//		// remove entry from bs
+//		bs_tab[frm->bs].pg_to_frm_map[frm->bs_page] = -1;
+//		// write to bs
+//		write_bs((char *)(frm->frm_num * NBPG), frm->bs, frm->bs_page);
+//		// remove entry from pg tbl
+////		remove_pg_tbl_entries(proctab[frm->fr_pid].pd, frm->fr_vpno, 1);
+//
+//		// remove from proc list
+//		remove_frm_from_proc_list(frm);
+//		frm->age = 0;
+//	}
+//	if(frm->fr_type == FR_TBL){
+//		kprintf("removing pg tbl from frame  =%d\n", frm->frm_num);
+//	}
+//	if(frm->fr_type == FR_DIR){
+//			kprintf("removing pg dir from frame  =%d\n", frm->frm_num);
+//	}
+//	remove_from_ocuupied_frm_list(frm);
+//	add_to_free_frm_list(frm);
+//	frm->bs = -1;
+//	frm->bs_page = -1;
+//	frm->status = FRM_FREE;
+//	return OK;
+	return free_shared_frm(frm, REMOVE_ALL);
+}
+
+SYSCALL free_shared_frm(frame_t *frm, int pid) {
+	if (frm->fr_type == FR_PAGE) {
 		kprintf("remove frame %d from bs %d\n", frm->frm_num, frm->bs);
 		// remove entry from bs
 		bs_tab[frm->bs].pg_to_frm_map[frm->bs_page] = -1;
 		// write to bs
-		write_bs((char *)(frm->frm_num * NBPG), frm->bs, frm->bs_page);
+		write_bs((char *) (frm->frm_num * NBPG), frm->bs, frm->bs_page);
 		// remove entry from pg tbl
-		remove_pg_tbl_entries(proctab[frm->fr_pid].pd, frm->fr_vpno, 1);
+//			remove_pg_tbl_entries(proctab[frm->fr_pid].pd, frm->fr_vpno, 1);
+		unmap_pg_tbl_entry(frm, pid);
 		// remove from proc list
 		remove_frm_from_proc_list(frm);
 		frm->age = 0;
 	}
-	if(frm->fr_type == FR_TBL){
+	if (frm->fr_type == FR_TBL) {
 		kprintf("removing pg tbl from frame  =%d\n", frm->frm_num);
 	}
-	if(frm->fr_type == FR_DIR){
-			kprintf("removing pg dir from frame  =%d\n", frm->frm_num);
+	if (frm->fr_type == FR_DIR) {
+		kprintf("removing pg dir from frame  =%d\n", frm->frm_num);
 	}
-	remove_from_ocuupied_frm_list(frm);
-	add_to_free_frm_list(frm);
-	frm->bs = -1;
-	frm->bs_page = -1;
-	frm->status = FRM_FREE;
+	if (frm->procs == NULL) {
+		remove_from_ocuupied_frm_list(frm);
+		add_to_free_frm_list(frm);
+		frm->bs = -1;
+		frm->bs_page = -1;
+		frm->status = FRM_FREE;
+	}
 	return OK;
 }
 
@@ -200,4 +233,61 @@ void remove_from_free_frm_list(frame_t *frm){
 		prev = curr;
 		curr = curr->fifo;
 	}
+}
+
+void add_proc_for_bs_frame(frame_t *frm, unsigned int vpno, int pid){
+	proc_frm_t *mapping = (proc_frm_t *) getmem(sizeof(proc_frm_t));
+	mapping->vpno = vpno;
+	mapping->pid = pid;
+	mapping->next = NULL;
+	if (frm->procs == NULL) {
+		frm->procs = mapping;
+	}else{
+		proc_frm_t *temp = frm->procs;
+		while(temp->next != NULL)
+			temp = temp->next;
+		temp->next = mapping;
+	}
+}
+
+proc_frm_t *remove_proc_mapping_from_bs_frame(frame_t *frm, int pid){
+	if(frm->procs == NULL)
+		return NULL;
+	else{
+		proc_frm_t *curr = frm->procs;
+		proc_frm_t *prev = frm->procs;
+		while(curr != NULL){
+			if(curr->pid == pid){
+				if(curr == frm->procs)
+					frm->procs = NULL;
+				else
+					prev->next = curr->next;
+				curr->next = NULL;
+				return curr;
+			}
+			prev = curr;
+			curr = curr->next;
+		}
+	}
+	return NULL;
+}
+
+proc_frm_t *remove_first__from_proc_mapping_from_bs_frame(frame_t *frm){
+	proc_frm_t *first = get_first__from_proc_mapping_from_bs_frame(frm);
+	if(first != NULL){
+		return remove_proc_mapping_from_bs_frame(frm, first->pid);
+	}
+	return NULL;
+
+}
+
+proc_frm_t *get_first__from_proc_mapping_from_bs_frame(frame_t *frm){
+	if(frm->procs == NULL)
+			return NULL;
+	else
+		return frm->procs;
+}
+
+int is_bs_frm_unmapped(frame_t *frm){
+	return frm->procs == NULL;
 }

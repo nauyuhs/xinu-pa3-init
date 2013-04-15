@@ -132,6 +132,25 @@ unsigned long add_entry_for_pg_fault(int pid, unsigned long vaddr, frame_t * frm
     return pptr->pdbr;
 }
 
+void unmap_pg_tbl_entry(frame_t *frm, int pid){
+	frame_t *pg_dir;
+
+	if(pid == REMOVE_ALL){
+		while(!is_bs_frm_unmapped(frm)){
+			proc_frm_t *mapping = remove_first__from_proc_mapping_from_bs_frame(frm);
+			pg_dir = proctab[mapping->pid].pd;
+			remove_pg_tbl_entries(pg_dir, mapping->vpno, 1);
+			freemem((struct mblock*)mapping, sizeof(proc_frm_t));
+		}
+	}
+	else{
+		proc_frm_t *mapping = remove_proc_mapping_from_bs_frame(frm, pid);
+		pg_dir = proctab[pid].pd;
+		remove_pg_tbl_entries(pg_dir, mapping->vpno, 1);
+		freemem((struct mblock*)mapping, sizeof(proc_frm_t));
+	}
+}
+
 void remove_pg_tbl_entries(frame_t *pg_dir, int vpno, int num_pgs){
 	int  i;
 	unsigned int pd_offset, pt_offset;
