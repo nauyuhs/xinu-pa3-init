@@ -10,7 +10,8 @@ typedef unsigned int	 bsd_t;
 #define NBPG		4096	/* number of bytes per page	*/
 #define FRAME0		1024	/* zero-th frame		*/
 
-#define NFRAMES 	1024	/* number of frames		*/
+#define NFRAMES 	25	/* number of frames		*/
+
 #define NUM_PG_TBL_ENTRIES 1024
 #define BSM_UNMAPPED	0
 #define BSM_MAPPED	1

@@ -23,7 +23,7 @@ SYSCALL init_frm()
 		frm_tab[i].status = FRM_FREE;
 		frm_tab[i].refcnt = 0;
 		frm_tab[i].bs = -1;
-		frm_tab[i].bs_page = -1;
+		frm_tab[i].bs_page = 0;
 		frm_tab[i].bs_next = NULL;
 		frm_tab[i].fifo = NULL;
 		frm_tab[i].age = 0;
@@ -34,21 +34,6 @@ SYSCALL init_frm()
   return OK;
 }
 
-/*-------------------------------------------------------------------------
- * get_frm - get a free frame according page replacement policy
- *-------------------------------------------------------------------------
- */
-SYSCALL get_frm(int* avail)
-{
-	int i = 0;
-	for (i = 0; i < NFRAMES; i++) {
-		if(frm_tab[i].status == FRM_FREE){
-			*avail = i;
-			return OK;
-		}
-	}
-  return SYSERR;
-}
 
 /*-------------------------------------------------------------------------
  * free_frm - free a frame 
@@ -67,6 +52,7 @@ SYSCALL free_frm(frame_t *frm)
 		remove_pg_tbl_entries(proctab[frm->fr_pid].pd, frm->fr_vpno, 1);
 		// remove from proc list
 		remove_frm_from_proc_list(frm);
+		frm->age = 0;
 	}
 	remove_from_ocuupied_frm_list(frm);
 	add_to_free_frm_list(frm);
@@ -80,6 +66,8 @@ frame_t *get_free_frame(){
 	frame_t * frm = get_from_free_frm_list();
 	if(frm == NULL){
 		frm = get_evicted_pg();
+		if(grpolicy() == AGING)
+			frm->age |= AGE_FACTOR;
 	}
 	kprintf("alloc_frame return frame %d\n", frm ->frm_num);
 	return frm;
@@ -87,16 +75,8 @@ frame_t *get_free_frame(){
 }
 
 frame_t *get_frm_from_frm_num(int frm_num){
-	int i = 0;
-	for (i = 0; i < NFRAMES; i++) {
-		if (frm_tab[i].frm_num == frm_num) {
-			return &frm_tab[i];
-		}
-	}
-	return 0;
+	return &frm_tab[frm_num - FRAME0];
 }
-
-
 
 void add_to_free_frm_list(frame_t *frm){
 	frm->fifo = NULL;
@@ -155,8 +135,9 @@ frame_t * get_evicted_pg(){
 	frame_t *frm;
 	if (grpolicy() == FIFO)
 		frm = fifo_evict_policy();
-	else
+	else{
 		frm = aging_evict_policy();
+	}
 
 	free_frm(frm); // free the frame
 	remove_from_free_frm_list(frm); // remove from free list
@@ -214,5 +195,3 @@ void remove_from_free_frm_list(frame_t *frm){
 		curr = curr->fifo;
 	}
 }
-
-

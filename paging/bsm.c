@@ -37,21 +37,11 @@ SYSCALL get_bsm(int* avail) {
 	for (i = 0; i < NBS; i++) {
 		if (bs_tab[i].status == BSM_UNMAPPED) {
 			return *avail = i;
-		return OK;
+			return OK;
 		}
 	}
 	return SYSERR;
 }
-
-bs_t *get_free_bs(){
-	int  i;
-	for (i = 0; i < NBS; i++)
-		if(bs_tab[i].status == BSM_UNMAPPED)
-			return &bs_tab[i];
-
-	return 0;
-}
-
 
 /*-------------------------------------------------------------------------
  * free_bsm - free an entry from bsm_tab 
@@ -116,8 +106,6 @@ SYSCALL bsm_map(int pid, int vpno, int source, int npages) {
 	return OK;
 }
 
-
-
 /*-------------------------------------------------------------------------
  * bsm_unmap - delete an mapping from bsm_tab
  *-------------------------------------------------------------------------
@@ -164,16 +152,11 @@ void remove_frm_from_proc_list(frame_t *frm){
 	}
 }
 
-
-
 int find_page(int start_vpage, int npages, int vaddr){
 	int  i;
-	for(i = start_vpage; i < (start_vpage + npages); i++){
-		if(vaddr >= i*NBPG && vaddr <= (i*NBPG + (NBPG - 1))){
-			 i -= start_vpage;
-			 return i;
-		}
-	}
+	for(i = start_vpage; i < (start_vpage + npages); i++)
+		if(vaddr >= i*NBPG && vaddr <= (i*NBPG + (NBPG - 1)))
+			 return i - start_vpage;
 	return (int)0;
 }
 
@@ -211,7 +194,6 @@ SYSCALL remove_owner_mapping(bsd_t source, int pid){
 		temp = temp->next;
 	}
 	return SYSERR;
-
 }
 
 void free_frms_for_bs(bsd_t id){
@@ -227,7 +209,6 @@ void free_frms_for_bs(bsd_t id){
 }
 
 void free_bs_frame(int frm_num){
-
 	frame_t *frm = get_frm_from_frm_num(frm_num);
 	write_bs((char *)(frm->frm_num * NBPG),
 			frm->bs, frm->bs_page);
@@ -250,7 +231,3 @@ void add_mapping_to_proc_frm_list(frame_t *frm, bsd_t id, int pid){
 	frm->fr_vpno = map->vpno + frm->bs_page;
 	frm->fr_pid = pid;
 }
-
-
-
-

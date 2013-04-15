@@ -82,12 +82,6 @@ nulluser()				/* babysit CPU when no one is home */
 	sysinit();
 
 	/* create a process to execute the user's main program */
-	/*userpid = create(main, INITSTK, INITPRIO, INITNAME, INITARGS);
-
-	//enable_paging(FP2PA(proctab[NULLPROC].pd) );
-	enable_paging((NFRAMES+4)*NBPG);
-	enable();
-	resume(userpid);*/
 	/*****************************/
 
 	enable();		/* enable interrupts */
@@ -235,7 +229,6 @@ sysinit()
 	init_bsm();
 	init_frm();
 
-	int start = NFRAMES;
 	kprintf("initialize page tables for null process\n");
 	init_glb_pgs(glb_pg_tbl_frm_mapping);
 	// init pg dir for proc 0
