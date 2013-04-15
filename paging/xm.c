@@ -41,7 +41,7 @@ SYSCALL xmunmap(int virtpage )
 	kprintf("xmummap call error: virtpage (%d) invalid! \n", virtpage);
 	return SYSERR;
   }
-  kprintf("unmap process %d:%x[%d]", currpid, virtpage, virtpage);
+  kprintf("unmap process %d:%x[%d]\n", currpid, virtpage, virtpage);
 
   bsm_unmap(currpid, virtpage, 1);
 

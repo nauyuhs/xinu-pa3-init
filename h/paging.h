@@ -274,6 +274,10 @@ int is_bs_frm_unmapped(frame_t *frm);
 
 proc_frm_t *remove_first__from_proc_mapping_from_bs_frame(frame_t *frm);
 proc_frm_t *get_first__from_proc_mapping_from_bs_frame(frame_t *frm);
+
+void print_free_mem_status();
+
+int is_free_frm_list_empty();
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/

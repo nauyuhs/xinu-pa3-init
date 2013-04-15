@@ -20,7 +20,6 @@ void test_xmmap(char *name, char *arg){
 	if (xmmap(i, bs, 200) == SYSERR) {
 		kprintf("xmmap call failed\n");
 		return;
-//		return SYSERR;
 	}
 
 	for (i = 0; i < 16; i++) {
@@ -37,7 +36,6 @@ void test_xmmap(char *name, char *arg){
 		addr += 4096;       //increment by one page each time
 	}
 	xmunmap(0x40000000 >> 12);
-//	return OK;
 }
 
 void test_xmmap_share(char *name, char *arg){
@@ -76,6 +74,150 @@ void test_vcreate(char *name, char *arg){
 	vfreemem(--x, 1000); /* frees the allocation in the virtual heap */
 }
 
+void frame_share1(char *name, char *arg){
+	kprintf("**************executing %s**********\n", name);
+	char *addr = (char*) 0x40000000; //1G
+	bsd_t bs = 1;
+	int i = ((unsigned long) addr) >> 12;	// the ith page
+
+	get_bs(bs, 200);
+
+	if (xmmap(i, bs, 200) == SYSERR) {
+		kprintf("xmmap call failed\n");
+		return;
+	}
+
+	kprintf("Write Operation for addr = %x\n==================\n", addr);
+	*addr = 'A';
+	kprintf("value expected at addr %x is 'A' and found :%c\n", addr, *addr);
+	kprintf("proc %s going to sleep\n", name);
+	sleep(1);
+	kprintf("!!!!!!!!!!!!!!calling xmunmap for proc %s\n", name);
+	xmunmap(0x40000000 >> 12);
+
+}
+
+void frame_share2(char *name, char *arg){
+	kprintf("**************executing %s**********\n", name);
+	char *addr = (char*) 0x80000000; //1G
+	bsd_t bs = 1;
+	int i = ((unsigned long) addr) >> 12;	// the ith page
+
+	get_bs(bs, 200);
+
+	if (xmmap(i, bs, 200) == SYSERR) {
+		kprintf("xmmap call failed\n");
+		return;
+	}
+
+	kprintf("Write Operation for addr = %x\n==================\n", addr);
+	kprintf("before writing value at addr %x is %c\n", addr, *addr);
+	*addr = 'B';
+	kprintf("value expected at addr %x is 'B' and found :%c\n", addr, *addr);
+	kprintf("!!!!!!!!!!!!!!calling xmunmap for proc %s\n", name);
+	xmunmap(0x80000000 >> 12);
+
+}
+
+
+void test_frame_share(){
+	int p1 = create(frame_share1,  2000,  35, "frame_share1", 1, "frame_share1");
+	int p2 = create(frame_share2,  2000,  30, "frame_share2", 1, "frame_share2");
+	resume(p1);
+	resume(p2);
+	char *addr = (char *)0x00900000;
+	kprintf("value in bs = %c\n", *addr);
+}
+
+void test_free_mem(char *name, char *arg){
+	kprintf("executing %s\n", name);
+	kprintf("before getting memory\n");
+	print_free_mem_status();
+	kprintf("getting memory\n");
+	int *x = vgetmem(1000);
+	kprintf("freeing the memory \n");
+	vfreemem(x, 1000);
+	print_free_mem_status();
+}
+
+void test_fifo(char *name, char *arg){
+	kprintf("executing %s, this is tested with 25 frames only. change NFRAMES to 25\n", name);
+	char *addr = (char*) 0x40000000; //1G
+	bsd_t bs = 1;
+	int i = ((unsigned long) addr) >> 12;	// the ith page
+
+	get_bs(bs, 200);
+
+	if (xmmap(i, bs, 200) == SYSERR) {
+		kprintf("xmmap call failed\n");
+		return;
+	}
+
+	i = 0;
+	kprintf("*******************generating first page fault\n");
+	*addr = 'A' + (i++);
+	addr += NBPG;	//increment by one page each time
+	kprintf("************filling all the pages\n");
+	while(!is_free_frm_list_empty()){
+		*addr = 'A' + (i++);
+		addr += NBPG;	//increment by one page each time
+	}
+	kprintf("*************all pages filled\n");
+	kprintf("~~~~~~~~~~generating fifo page fault\n");
+	addr += NBPG;	//increment by one page each time
+	*addr = 'A' + (i++);
+}
+
+void test_aging(char *name, char *arg) {
+	kprintf("executing %s, this is tested with 25 frames only. change NFRAMES to 25\n",
+			name);
+	kprintf("setting aging policy\n");
+	srpolicy(AGING);
+	char *addr = (char*) 0x40000000; //1G
+	bsd_t bs = 1;
+	int i = ((unsigned long) addr) >> 12;	// the ith page
+
+	get_bs(bs, 200);
+
+	if (xmmap(i, bs, 200) == SYSERR) {
+		kprintf("xmmap call failed\n");
+		return;
+	}
+
+	i = 0;
+	kprintf("*******************generating first page fault\n");
+	*addr = 'A' + (i++);
+	addr += NBPG;	//increment by one page each time
+	kprintf("************filling all the pages\n");
+	while (!is_free_frm_list_empty()) {
+		*addr = 'A' + (i++);
+		addr += NBPG;	//increment by one page each time
+	}
+	kprintf("*************all pages filled\n");
+	kprintf("access first page again\n");
+	addr = (char*) 0x40000000; //1G
+	*addr = 'A';
+	kprintf("************generating aging page fault\n");
+	addr += ((++i) * NBPG);	//increment by one page each time
+	*addr = 'Z';
+	kprintf("setting back fifo policy\n");
+	srpolicy(FIFO);
+}
+
+void test_xmmap_failure(char *name, char *arg){
+	kprintf("executing %s\n", name);
+	char *addr = (char*) 0x40000000; //1G
+	bsd_t bs = 0;
+	int i = ((unsigned long) addr) >> 12;	// the ith page
+
+	get_bs(bs, 200);
+
+	if (xmmap(i, bs, 200) == SYSERR) {
+		kprintf("Expected:xmmap call failed\n");
+		return;
+	}
+}
+
 
 /*------------------------------------------------------------------------
  *  main  --  user main program
@@ -84,99 +226,20 @@ void test_vcreate(char *name, char *arg){
 int main() {
 
 	kprintf("\n\nHello World, Xinu lives\n\n");
-	int p1 = create(test_xmmap,  2000,  35, "test_xmmap", 1, "test_xmmap");
-	int p2 = create(test_xmmap_share,  2000, 30, "test_xmmap_shar", 1, "test_xmmap_shar");
-	int p3 = vcreate(test_vcreate, 100,  2000, 30, "test_vcreate", 1, "test_vcreate");
-	resume(p1);
-	resume(p2);
-	resume(p3);
-//	srpolicy(AGING);
-//	char *addr = (char*) 0x40000000; //1G
-////	char *addr = (char*) (2048*4096);
-//	bsd_t bs = 1;
-//
-//	int i = ((unsigned long) addr) >> 12;	// the ith page
-//
-//
-//
-////	pt_t *ptr = (pt_t *)(NBPG*NFRAMES);
-////	ptr += 1023;
-////	kprintf("\nAccessing first PT, size %d, base %d\n",sizeof(ptr), ptr->pt_base);
-////	pd_t *ptr1 = (pd_t *)(NBPG*NFRAMES);
-////	ptr1 += NBPG;
-////	kprintf("\nAccessing first PD, size %d, base %d\n",sizeof(ptr1), ptr1->pd_base);
-//	get_bs(bs, 200);
-//
-//	if (xmmap(i, bs, 200) == SYSERR) {
-//		kprintf("xmmap call failed\n");
-//		return 0;
-//	}
-//
-//	for (i = 0; i < 16; i++) {
-//		*addr = 'A' + i;
-//		addr += NBPG;	//increment by one page each time
-//	}
-//
-//	addr = (char*) 0x40000000; //1G
-//	for (i = 0; i < 16; i++) {
-//		kprintf("0x%08x: %c\n", addr, *addr);
-//		addr += 4096;       //increment by one page each time
-//	}
-//
-//
-////
-//	char *addr2 = (char*) 0x80000000; //1G
-//	bsd_t bs2 = 2;
-//	int i2 = ((unsigned long) addr2) >> 12;	// the ith page
-//	get_bs(bs2, 200);
-//	if (xmmap(i2, bs2, 200) == SYSERR) {
-//			kprintf("xmmap call failed\n");
-//	//		return 0;
-//	}
-//	for (i2 = 0; i2 < 16; i2++) {
-//			*addr2 = 'A' + i;
-//			addr2 += NBPG;	//increment by one page each time
-//		}
-//
-//		addr2 = (char*) 0x80000000; //1G
-//		for (i2 = 0; i2 < 16; i2++) {
-//			kprintf("0x%08x: %c\n", addr2, *addr2);
-//			addr2 += 4096;       //increment by one page each time
-//		}
-//
-//
-//	xmunmap(0x40000000 >> 12);
-//	xmunmap(0x80000000 >> 12);
-
-//	addr = (char*) 0x40000000; //1G
-//	i = ((unsigned long) addr) >> 12;	// the ith page
-//	get_bs(bs, 200);
-
-//	if (xmmap(i, bs, 200) == SYSERR) {
-//		kprintf("xmmap call failed\n");
-//		//		return 0;
-//	}
-//	addr = (char*) 0x40000000; //1G
-//	for (i = 0; i < 16; i++) {
-//		kprintf("0x%08x: %c\n", addr, *addr);
-//		addr += 4096;       //increment by one page each time
-//	}
-
-
-//	char *addr2 = (char*) 0x40000000; //1G
-
-
-//	char *kk = (char *)0x40000000;
-//	unsigned long adder  = (unsigned)kk + 0x1000;
-//	kprintf("vadder physical addr = %d\n", adder);
-
-//	int p1 = vcreate(producer,  2000, 100, 30, "producer", 1, "dummyarg");
-//	 resume(p1);
-//	addr = (char*) 0x901000;
-//	kprintf("val in bs 1 pg 0 %c\n", *addr);
-//	pt_t *ptt = (pt_t *)(1031* 4096);
-//	kprintf("pg aftr deletion %d\n", (ptt + 1)->pt_base);
-//	pd_t *pdd = (pd_t *)(NBPG * 1029);
-//	kprintf("pg dir val %d and pres = %d\n", (pdd+ 256)->pd_base, (pdd+ 256)->pd_pres);
+//	int p1 = create(test_xmmap,  2000,  35, "test_xmmap", 1, "test_xmmap");
+//	int p2 = create(test_xmmap_share,  2000, 30, "test_xmmap_shar", 1, "test_xmmap_shar");
+//	int p3 = vcreate(test_vcreate, 100,  2000, 30, "test_vcreate", 1, "test_vcreate");
+//	int p4 = vcreate(test_free_mem, 100,  2000, 30, "test_free_mem", 1, "test_free_mem");
+//	int p5 = create(test_fifo,  2000,  35, "test_fifo", 1, "test_fifo");
+//	int p6 = create(test_aging,  2000,  35, "test_aging", 1, "test_aging");
+	int p7 = vcreate(test_xmmap_failure, 100,  2000, 30, "xmmap_failure", 1, "xmmap_failure");
+//	test_frame_share();
+//	resume(p1);
+//	resume(p2);
+//	resume(p3);
+//	resume(p4);
+//	resume(p5);
+//	resume(p6);
+	resume(p7);
 	return 0;
 }

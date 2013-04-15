@@ -31,3 +31,18 @@ SYSCALL	vfreemem(block, size)
 		restore(ps);
 		return(OK);
 }
+
+/**
+ * for testing purpose
+ */
+void print_free_mem_status(){
+	kprintf("\n*****************status of virtual heap***********************\n");
+	struct pentry *pptr = &proctab[currpid];
+	mem_list *tmp = &(pptr->mem_list_t);
+	while (tmp != NULL) {
+		if(tmp->memlen != 0){
+			kprintf("block starts at addr [%x] with length = %x\n\n", tmp->mem, tmp->memlen);
+		}
+		tmp = tmp->next;
+	}
+}

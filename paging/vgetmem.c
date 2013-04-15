@@ -32,7 +32,7 @@ WORD	*vgetmem(nbytes)
 			char *loc = tmp->mem;
 			tmp->mem = (unsigned)tmp->mem + nbytes;
 			tmp->memlen -= nbytes;
-			return ((WORD *) tmp->mem);
+			return ((WORD *) loc);
 		}
 		tmp = tmp->next;
 	}

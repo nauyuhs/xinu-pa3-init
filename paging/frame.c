@@ -130,7 +130,7 @@ void add_to_free_frm_list(frame_t *frm){
 }
 
 frame_t *get_from_free_frm_list(){
-	if(free_frm_list == NULL){
+	if(is_free_frm_list_empty()){
 //		kprintf("no frames in free list need to evict\n");
 		return NULL;
 	}
@@ -139,6 +139,10 @@ frame_t *get_from_free_frm_list(){
 	free_frm_list = tmp->fifo;
 	add_to_ocuupied_frm_list(tmp);
 	return tmp;
+}
+
+int is_free_frm_list_empty(){
+	return free_frm_list == NULL;
 }
 
 void add_to_ocuupied_frm_list(frame_t *frm){
@@ -185,7 +189,6 @@ frame_t * get_evicted_pg(){
 }
 
 frame_t *fifo_evict_policy(){
-//	kprintf("fifo eviction policy called\n");
 	frame_t *curr = unfree_frm_list.head;
 	while(curr != NULL){
 		if(curr->fr_type == FR_PAGE) return curr;
@@ -195,7 +198,6 @@ frame_t *fifo_evict_policy(){
 }
 
 frame_t *aging_evict_policy(){
-//	kprintf("aging eviction policy called\n");
 	frame_t *frm_with_lowest_age = NULL;
 	frame_t *curr = unfree_frm_list.head;
 	while(curr != NULL){
@@ -217,7 +219,6 @@ frame_t *aging_evict_policy(){
 
 void remove_from_free_frm_list(frame_t *frm){
 	if (free_frm_list == NULL) {
-//		kprintf("no frames present to free\n");
 		return;
 	}
 	frame_t *curr = free_frm_list;

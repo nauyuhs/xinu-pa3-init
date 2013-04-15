@@ -44,7 +44,7 @@ SYSCALL vcreate(procaddr,ssize,hsize,priority,name,nargs,args)
 	bsm_map(pid, 4096, avail, hsize);
 	struct pentry *pptr = &proctab[pid];
 	pptr->vcreate_bs_id = avail;
-	pptr->mem_list_t.mem = (char *)(4096*4096+1 );
+	pptr->mem_list_t.mem = (char *)(4096*4096);
 	pptr->mem_list_t.memlen = NUM_BS_PGS * NBPG; // in bytes
 	restore(ps);
 	return pid;
