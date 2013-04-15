@@ -25,11 +25,13 @@ SYSCALL kill(int pid)
 		return(SYSERR);
 	}
 	kprintf("purge all the mapping for pid %d \nfree page tables for %d\n", pid, pid);
-	free_pg_dir(pptr->pd);
+
 	for(i = 0; i < NBS;i++){
-		if(pptr->map[i].status == BSM_MAPPED)
+		if(pptr->map[i].status == BSM_MAPPED){
 			bsm_unmap(pid, pptr->map[i].vpno, 1);
+		}
 	}
+	free_pg_dir(pptr->pd);
 	if (--numproc == 0)
 		xdone();
 

@@ -14,10 +14,15 @@ SYSCALL xmmap(int virtpage, bsd_t source, int npages)
 {
   /* sanity check ! */
 
-  if ( (virtpage < 4096) || ( source < 0 ) || ( source > MAX_ID) ||(npages < 1) || ( npages >200)){
-	kprintf("xmmap call error: parameter error! \n");
-	return SYSERR;
-  }
+	if (get_bs(source, npages) == SYSERR) {
+		kprintf("error in get_bs\n");
+		return SYSERR;
+	}
+	if ((virtpage < 4096) || (source < 0) || (source > MAX_ID) || (npages < 1)
+			|| (npages > 200)) {
+		kprintf("xmmap call error: parameter error! \n");
+		return SYSERR;
+	}
   kprintf("map bs%d into process %d:%x[%d]\n", source, currpid, virtpage, virtpage);
 
   return bsm_map(currpid, virtpage, source, npages);

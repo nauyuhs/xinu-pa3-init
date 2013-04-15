@@ -54,6 +54,12 @@ SYSCALL free_frm(frame_t *frm)
 		remove_frm_from_proc_list(frm);
 		frm->age = 0;
 	}
+	if(frm->fr_type == FR_TBL){
+		kprintf("removing pg tbl from frame  =%d\n", frm->frm_num);
+	}
+	if(frm->fr_type == FR_DIR){
+			kprintf("removing pg dir from frame  =%d\n", frm->frm_num);
+	}
 	remove_from_ocuupied_frm_list(frm);
 	add_to_free_frm_list(frm);
 	frm->bs = -1;
