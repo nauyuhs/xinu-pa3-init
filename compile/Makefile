@@ -56,7 +56,8 @@ TTY =	ttyalloc.c	ttycntl.c	ttygetc.c	ttyiin.c	\
 PG  = 	get_bs.c        release_bs.c    read_bs.c       write_bs.c	\
 	control_reg.c   bsm.c           policy.c 	\
 	frame.c         pfint.c         dump32.c        vcreate.c       \
-	xm.c            vgetmem.c       vfreemem.c		pg_tbl_mgr.c
+	xm.c            vgetmem.c       vfreemem.c		pg_tbl_mgr.c	\
+	debug.c
 
 SRC = ${COM} ${TTY} ${MON} ${SYS}
 

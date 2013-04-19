@@ -48,6 +48,11 @@ typedef unsigned int	 bsd_t;
 
 #define REMOVE_ALL -3
 
+#define ENABLE_DEBUG 1
+#define DISABLE_BEBUG 0
+
+extern int isdebug;
+
 typedef struct {
 
   unsigned int pd_pres	: 1;		/* page table present?		*/
@@ -278,6 +283,10 @@ proc_frm_t *get_first__from_proc_mapping_from_bs_frame(frame_t *frm);
 void print_free_mem_status();
 
 int is_free_frm_list_empty();
+
+int is_debug_enabled();
+void enable_debug();
+void debug_print(char *fmt, int args);
 /*creating common 4 page tables and 1 page directory
 pt_t shared_page_table[4][1024];
 pd_t shared_page_directory[4];*/

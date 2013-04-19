@@ -11,7 +11,7 @@
  */
 SYSCALL pfint() {
 
-	kprintf("#PF in %s, cr2:%x:ec2\n", proctab[currpid].pname, read_cr2());
+//	kprintf("#PF in %s, cr2:%x:ec2\n", proctab[currpid].pname, read_cr2());
 	STATWORD ps;
 	disable(ps);
 	int store, pageth;

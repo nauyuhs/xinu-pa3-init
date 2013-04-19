@@ -120,7 +120,6 @@ SYSCALL bsm_unmap(int pid, int vpno, int flag)
 	while(frms != NULL){
 		frame_t *temp = frms;
 		frms = frms->bs_next;
-//		free_frm(temp);
 		free_shared_frm(temp, pid);
 	}
 	remove_owner_mapping(map->bs, pid);
@@ -131,7 +130,7 @@ SYSCALL bsm_unmap(int pid, int vpno, int flag)
 	map->vpno = 0;
 	if(bs_tab[store].owners == NULL)
 		free_bsm(store);
-	kprintf("delete pid %d's mapping of bs%d@%d\n", pid, store, vpno);
+//	kprintf("delete pid %d's mapping of bs%d@%d\n", pid, store, vpno);
 	return OK;
 }
 
@@ -176,7 +175,7 @@ frame_t *bs_get_frame(bsd_t id, int pageth) {
 		// now bring the page into memory
 		read_bs((char *) (bs_frm->frm_num * NBPG), id, pageth);
 	}
-	kprintf("map bs%d/page: %d to frame %d\n", id, pageth, bs_frm->frm_num);
+//	kprintf("map bs%d/page: %d to frame %d\n", id, pageth, bs_frm->frm_num);
 	return bs_frm;
 }
 

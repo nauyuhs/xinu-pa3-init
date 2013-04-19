@@ -51,6 +51,8 @@ int page_replace_policy = FIFO;
 
 int glb_pg_tbl_frm_mapping[NUM_GLB_PG_TBLS];
 
+int isdebug = DISABLE_BEBUG;
+
 
 /************************************************************************/
 /***				NOTE:				      ***/

@@ -18,7 +18,7 @@ WORD	*vgetmem(nbytes)
 
 	disable(ps);
 	struct pentry *pptr = &proctab[currpid];
-	if (nbytes == 0 ) {
+	if (nbytes == 0 || nbytes >= pptr->vheap_size) {
 		restore(ps);
 		return ((WORD *) SYSERR);
 	}

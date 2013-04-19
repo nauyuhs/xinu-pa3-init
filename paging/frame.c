@@ -42,38 +42,12 @@ SYSCALL init_frm()
  */
 SYSCALL free_frm(frame_t *frm)
 {
-//	kprintf("request to free frame %d of type %d\n", frm->frm_num, frm->fr_type);
-//	if(frm->fr_type == FR_PAGE){
-//		kprintf("remove frame %d from bs %d\n", frm->frm_num, frm->bs);
-//		// remove entry from bs
-//		bs_tab[frm->bs].pg_to_frm_map[frm->bs_page] = -1;
-//		// write to bs
-//		write_bs((char *)(frm->frm_num * NBPG), frm->bs, frm->bs_page);
-//		// remove entry from pg tbl
-////		remove_pg_tbl_entries(proctab[frm->fr_pid].pd, frm->fr_vpno, 1);
-//
-//		// remove from proc list
-//		remove_frm_from_proc_list(frm);
-//		frm->age = 0;
-//	}
-//	if(frm->fr_type == FR_TBL){
-//		kprintf("removing pg tbl from frame  =%d\n", frm->frm_num);
-//	}
-//	if(frm->fr_type == FR_DIR){
-//			kprintf("removing pg dir from frame  =%d\n", frm->frm_num);
-//	}
-//	remove_from_ocuupied_frm_list(frm);
-//	add_to_free_frm_list(frm);
-//	frm->bs = -1;
-//	frm->bs_page = -1;
-//	frm->status = FRM_FREE;
-//	return OK;
 	return free_shared_frm(frm, REMOVE_ALL);
 }
 
 SYSCALL free_shared_frm(frame_t *frm, int pid) {
 	if (frm->fr_type == FR_PAGE) {
-		kprintf("remove frame %d from bs %d\n", frm->frm_num, frm->bs);
+//		kprintf("remove frame %d from bs %d\n", frm->frm_num, frm->bs);
 		// remove entry from bs
 		bs_tab[frm->bs].pg_to_frm_map[frm->bs_page] = -1;
 		// write to bs
@@ -86,10 +60,10 @@ SYSCALL free_shared_frm(frame_t *frm, int pid) {
 		frm->age = 0;
 	}
 	if (frm->fr_type == FR_TBL) {
-		kprintf("removing pg tbl from frame  =%d\n", frm->frm_num);
+//		kprintf("removing pg tbl from frame  =%d\n", frm->frm_num);
 	}
 	if (frm->fr_type == FR_DIR) {
-		kprintf("removing pg dir from frame  =%d\n", frm->frm_num);
+//		kprintf("removing pg dir from frame  =%d\n", frm->frm_num);
 	}
 	if (frm->procs == NULL) {
 		remove_from_ocuupied_frm_list(frm);
@@ -108,7 +82,7 @@ frame_t *get_free_frame(){
 		if(grpolicy() == AGING)
 			frm->age |= AGE_FACTOR;
 	}
-	kprintf("alloc_frame return frame %d\n", frm ->frm_num);
+//	kprintf("alloc_frame return frame %d\n", frm ->frm_num);
 	return frm;
 
 }
@@ -185,6 +159,7 @@ frame_t * get_evicted_pg(){
 	free_frm(frm); // free the frame
 	remove_from_free_frm_list(frm); // remove from free list
 	add_to_ocuupied_frm_list(frm); // add to unfree list
+	debug_print("replacing frame = %d\n", frm->frm_num);
 	return frm;
 }
 

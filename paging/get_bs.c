@@ -11,13 +11,13 @@ int get_bs(bsd_t bs_id, unsigned int npages) {
 
 	disable(ps);
 
-	if((npages == 0 || npages > 256) || (bs_id < 0 || bs_id > MAX_ID) ||bs_tab[bs_id].as_heap) {
+	if((npages == 0 || npages > 200) || (bs_id < 0 || bs_id > MAX_ID) ||bs_tab[bs_id].as_heap) {
 		restore(ps);
 		return(SYSERR);
 	}
-	kprintf("Calling get_bs for bs: %d npages:%d\n", bs_id, npages);
-	kprintf("%d pages of %d bs allocated\n", npages, bs_id);
-	enable(ps);
+//	kprintf("Calling get_bs for bs: %d npages:%d\n", bs_id, npages);
+//	kprintf("%d pages of %d bs allocated\n", npages, bs_id);
+	restore(ps);
     return npages;
 
 }

@@ -84,7 +84,8 @@ struct	pentry	{
         struct mblock vmemlist;        /* vheap list              	*/
         bs_map_t map[NBS];				/* to maintain backing store mapping 	*/
         mem_list mem_list_t;
-        bsd_t vcreate_bs_id;				/* foro testing purpose 		*/
+        bsd_t vcreate_bs_id;				/* for testing purpose 		*/
+        unsigned long vheap_size;
 };
 
 

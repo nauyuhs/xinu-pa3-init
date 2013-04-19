@@ -34,7 +34,7 @@ SYSCALL vcreate(procaddr,ssize,hsize,priority,name,nargs,args)
 	STATWORD 	ps;
 	disable(ps);
 	get_bsm(&avail);
-	if(avail == SYSERR){
+	if(avail == SYSERR || hsize > 200){
 		restore(ps);
 		return SYSERR;
 	}
@@ -45,7 +45,8 @@ SYSCALL vcreate(procaddr,ssize,hsize,priority,name,nargs,args)
 	struct pentry *pptr = &proctab[pid];
 	pptr->vcreate_bs_id = avail;
 	pptr->mem_list_t.mem = (char *)(4096*4096);
-	pptr->mem_list_t.memlen = NUM_BS_PGS * NBPG; // in bytes
+	pptr->mem_list_t.memlen = hsize * NBPG; // in bytes
+	pptr->vheap_size = hsize * NBPG;
 	restore(ps);
 	return pid;
 }

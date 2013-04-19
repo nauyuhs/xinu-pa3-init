@@ -89,7 +89,7 @@ SYSCALL init_pg_dir(frame_t *frm, int pid) {
 	frm->status = FRM_PGD;
 
 	for (i = 0; i < NUM_GLB_PG_TBLS; i++) {
-		kprintf("pd[%d].base = %d\n", i,  glb_pg_tbl_frm_mapping[i]);
+//		kprintf("pd[%d].base = %d\n", i,  glb_pg_tbl_frm_mapping[i]);
 		make_pg_dir_entry(frm, i, glb_pg_tbl_frm_mapping[i]);
 	}
 	return OK;
@@ -106,7 +106,7 @@ SYSCALL free_pg_dir(frame_t *pd){
 		}
 		ptr1++;
 	}
-	kprintf("freed pg dir at %d \n", pd->frm_num);
+//	kprintf("freed pg dir at %d \n", pd->frm_num);
 	// free the dir
 	free_frm(get_frm_from_frm_num(pd->frm_num));
 	pd = NULL;

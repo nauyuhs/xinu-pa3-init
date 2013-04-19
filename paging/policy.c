@@ -13,9 +13,11 @@ extern int page_replace_policy;
 SYSCALL srpolicy(int policy)
 {
   /* sanity check ! */
+	if(!(policy == FIFO || policy == AGING))
+		return SYSERR;
 
 	page_replace_policy = policy;
-
+	enable_debug();
   return OK;
 }
 

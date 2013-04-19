@@ -20,8 +20,9 @@ SYSCALL	vfreemem(block, size)
 			return(SYSERR);
 		disable(ps);
 		mem_list *mem = (mem_list *)(getmem(sizeof(mem_list)));
-		mem->mem = block;
+		mem->mem = (char *)block;
 		mem->memlen = size;
+		mem->next = NULL;
 		struct pentry *pptr = &proctab[currpid];
 		mem_list *tmp = &(pptr->mem_list_t);
 		while(tmp->next != NULL){
